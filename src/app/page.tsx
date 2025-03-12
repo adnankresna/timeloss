@@ -194,10 +194,8 @@ export default function Home() {
 
   // Calculate meeting cost whenever inputs change
   useEffect(() => {
-    if (isValidInput(duration)) {
-      calculateCost();
-    }
-  }, [duration, timeUnit, participants, useExactRates, calculateCost]);
+    calculateCost();
+  }, [participants, duration, timeUnit, useExactRates]);
 
   // Toggle between exact rates and salary ranges
   const toggleRateMode = () => {

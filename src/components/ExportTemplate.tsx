@@ -66,7 +66,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
     
     // Calculate percentages for each participant based on the calculated total
     const participantPercentages = individualCosts.map(cost => 
-      calculatedTotalCost > 0 ? parseFloat(((cost / calculatedTotalCost) * 100).toFixed(1)) : 0
+      parseFloat(((cost / calculatedTotalCost) * 100).toFixed(1))
     );
     
     // Static title and subtitle for a more human touch
