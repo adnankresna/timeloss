@@ -11,6 +11,14 @@
   }
 }
 
+html {
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+body {
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
@@ -52,7 +60,6 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
-  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .dark {
@@ -90,7 +97,29 @@
   --sidebar-ring: oklch(0.439 0 0);
 }
 
-/* Add transitions to elements that change with theme */
+/* Add transitions to theme color properties in CSS variables */
+:root,
+.dark {
+  transition-property: color, background-color;
+  transition-duration: 0.5s;
+  transition-timing-function: ease;
+}
+
+/* Transition for specific UI elements */
+.bg-background,
+.bg-card,
+.bg-muted,
+.bg-primary,
+.text-foreground,
+.text-primary,
+.border,
+.border-border {
+  transition-property: color, background-color, border-color;
+  transition-duration: 0.5s;
+  transition-timing-function: ease;
+}
+
+/* Remove the universal transition to be more selective */
 * {
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
   transition-timing-function: ease;
