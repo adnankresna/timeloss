@@ -437,7 +437,7 @@ export default function Home() {
         />
       </div>
     
-      <Card className="w-full max-w-4xl relative shadow-sm border">
+      <Card className="w-full max-w-4xl relative" variant="borderless">
         <div className="absolute top-5 right-5 z-10">
           <ThemeToggle />
         </div>
