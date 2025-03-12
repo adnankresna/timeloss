@@ -499,33 +499,33 @@ export default function Home() {
             
             <div className="bg-muted/10 p-6 rounded-xl">
               {/* Privacy mode toggle */}
-              <div className="flex items-center justify-center gap-3 mb-4 border-b pb-4 border-border/30">
-                <Button
-                  type="button"
-                  variant={useExactRates ? "default" : "outline"}
-                  size="sm"
-                  className="flex items-center gap-1 px-5 py-2 h-9 rounded-full"
-                  onClick={toggleRateMode}
-                >
-                  <Unlock className="h-4 w-4 mr-1" />
-                  Exact Rates
-                </Button>
-                <Button
-                  type="button"
-                  variant={!useExactRates ? "default" : "outline"}
-                  size="sm"
-                  className="flex items-center gap-1 px-5 py-2 h-9 rounded-full"
-                  onClick={toggleRateMode}
-                >
-                  <LockKeyhole className="h-4 w-4 mr-1" />
-                  Privacy Mode
-                </Button>
+              <div className="flex flex-col space-y-2 mb-4 border-b pb-4 border-border/30">
+                <div className="flex items-center justify-center gap-3">
+                  <Button
+                    type="button"
+                    variant={useExactRates ? "default" : "outline"}
+                    size="sm"
+                    className="flex items-center gap-1 px-5 py-2 h-9 rounded-full transition-all duration-300 ease-in-out"
+                    onClick={toggleRateMode}
+                  >
+                    <Unlock className="h-4 w-4 mr-1" />
+                    Exact Rates
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={!useExactRates ? "default" : "outline"}
+                    size="sm"
+                    className="flex items-center gap-1 px-5 py-2 h-9 rounded-full transition-all duration-300 ease-in-out"
+                    onClick={toggleRateMode}
+                  >
+                    <LockKeyhole className="h-4 w-4 mr-1" />
+                    Privacy Mode
+                  </Button>
+                </div>
                 
-                {!useExactRates && (
-                  <p className="text-xs text-muted-foreground ml-2">
-                    Privacy mode uses salary ranges instead of exact figures
-                  </p>
-                )}
+                <p className="text-xs text-muted-foreground text-center transition-opacity duration-300 ease-in-out">
+                  {!useExactRates ? "Privacy mode uses salary ranges instead of exact figures" : "Exact rates mode uses precise hourly costs"}
+                </p>
               </div>
               
               {/* Team size quick selection */}
@@ -594,9 +594,9 @@ export default function Home() {
                     </Label>
                   </div>
                   
-                  <div className="flex-1">
+                  <div className="flex-1 transition-all duration-300 ease-in-out">
                     {useExactRates ? (
-                      <div className="flex items-center">
+                      <div className="flex items-center animate-in fade-in duration-300">
                         <Input
                           type="number"
                           placeholder="e.g., 50"
@@ -610,20 +610,22 @@ export default function Home() {
                         <span className="ml-2 text-sm font-medium">$/hr</span>
                       </div>
                     ) : (
-                      <Select
-                        onValueChange={(value) => applyRateToAll(value)}
-                      >
-                        <SelectTrigger className="w-full max-w-60 rounded-lg">
-                          <SelectValue placeholder="Select range" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {SALARY_RANGES.map((range) => (
-                            <SelectItem key={range.value} value={range.value}>
-                              {range.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <div className="animate-in fade-in duration-300">
+                        <Select
+                          onValueChange={(value) => applyRateToAll(value)}
+                        >
+                          <SelectTrigger className="w-full max-w-60 rounded-lg">
+                            <SelectValue placeholder="Select range" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {SALARY_RANGES.map((range) => (
+                              <SelectItem key={range.value} value={range.value}>
+                                {range.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
                     )}
                   </div>
                   
@@ -668,9 +670,9 @@ export default function Home() {
                           </div>
                         </div>
                         
-                        <div className="md:col-span-6">
+                        <div className="md:col-span-6 transition-all duration-300 ease-in-out">
                           {useExactRates ? (
-                            <>
+                            <div className="animate-in fade-in duration-300">
                               <Label htmlFor={`rate-${participant.id}`} className="text-sm mb-1 block">Hourly Rate (USD)</Label>
                               <Input
                                 id={`rate-${participant.id}`}
@@ -682,9 +684,9 @@ export default function Home() {
                                 step="1"
                                 className="w-full rounded-lg"
                               />
-                            </>
+                            </div>
                           ) : (
-                            <>
+                            <div className="animate-in fade-in duration-300">
                               <Label htmlFor={`range-${participant.id}`} className="text-sm mb-1 block">Salary Range</Label>
                               <Select
                                 value={participant.salaryRange}
@@ -701,7 +703,7 @@ export default function Home() {
                                   ))}
                                 </SelectContent>
                               </Select>
-                            </>
+                            </div>
                           )}
                         </div>
                         
