@@ -11,6 +11,25 @@
   }
 }
 
+@layer components {
+  .theme-toggle-btn {
+    @apply w-10 h-10 transition-all duration-200 
+    hover:scale-110 active:scale-95 
+    flex items-center justify-center;
+  }
+  
+  .theme-toggle-container {
+    @apply fixed z-50 transition-all duration-200 ease-in-out
+    rounded-full p-0 w-12 h-12 flex items-center justify-center
+    hover:scale-105;
+  }
+  
+  .frosted-glass {
+    @apply bg-background/60 backdrop-blur-lg shadow-lg 
+    border border-background/20 dark:border-foreground/10;
+  }
+}
+
 /* Core transitions for theme switching */
 html,
 body,

@@ -92,6 +92,9 @@ export default function Home() {
   const [customParticipantCount, setCustomParticipantCount] = useState<string>("");
   const [showParticipantDetails, setShowParticipantDetails] = useState<boolean>(true);
 
+  // Add state for tracking scroll and overlap
+  const [isScrolled, setIsScrolled] = useState<boolean>(false);
+
   // Helper function to validate inputs
   const isValidInput = (value: string): boolean => {
     const num = parseFloat(value);
@@ -417,8 +420,40 @@ export default function Home() {
     return totalHours % 1 === 0 ? totalHours.toString() : totalHours.toFixed(1);
   };
 
+  // Add scroll event listener with improved detection
+  useEffect(() => {
+    const handleScroll = () => {
+      // When scrolled beyond a threshold, apply the frosted glass effect
+      const scrollPosition = window.scrollY;
+      const screenHeight = window.innerHeight;
+      const contentHeight = document.body.scrollHeight;
+      
+      // Apply effect when scrolled down or when content is tall enough to warrant it
+      const shouldApplyEffect = scrollPosition > 100 || 
+                              (contentHeight > screenHeight * 1.5 && scrollPosition > 50);
+      
+      setIsScrolled(shouldApplyEffect);
+    };
+
+    // Add scroll event listener
+    window.addEventListener('scroll', handleScroll);
+    
+    // Initial check
+    handleScroll();
+    
+    // Cleanup
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-start p-4 sm:p-8 bg-background">
+    <main className="flex min-h-screen flex-col items-center justify-start p-4 sm:p-8 bg-background relative">
+      {/* Theme Toggle - Fixed position with conditional frosted glass effect */}
+      <div className={`theme-toggle-container 
+        ${isScrolled ? 'frosted-glass' : ''} 
+        top-auto bottom-4 right-4 sm:top-4 sm:bottom-auto sm:right-4`}>
+        <ThemeToggle />
+      </div>
+      
       {/* Hidden export template for high-quality image capture */}
       <div className="fixed left-[-9999px] top-0 overflow-hidden">
         <ExportTemplate
@@ -438,10 +473,6 @@ export default function Home() {
       </div>
     
       <Card className="w-full max-w-4xl relative" variant="borderless">
-        <div className="absolute top-3 sm:top-5 right-3 sm:right-5 z-10">
-          <ThemeToggle />
-        </div>
-        
         <CardHeader className="pb-2 sm:pb-4 px-4 sm:px-6">
           <div className="flex flex-col items-center">
             <CardTitle className="text-center text-2xl sm:text-3xl font-bold tracking-tight">Timeloss</CardTitle>
