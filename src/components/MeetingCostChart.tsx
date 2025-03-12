@@ -10,21 +10,13 @@ Chart.register(...registerables);
 interface MeetingCostChartProps {
   participants: Participant[];
   totalCost: number | null;
-  duration: string;
-  timeUnit: string;
-  useExactRates: boolean;
-  getSalaryRangeMidpoint: (range: string) => number;
-  calculateIndividualCost: (participant: Participant) => number;
   isDarkMode: boolean;
+  calculateIndividualCost: (participant: Participant) => number;
 }
 
 export default function MeetingCostChart({
   participants,
   totalCost,
-  duration,
-  timeUnit,
-  useExactRates,
-  getSalaryRangeMidpoint,
   calculateIndividualCost,
   isDarkMode
 }: MeetingCostChartProps) {

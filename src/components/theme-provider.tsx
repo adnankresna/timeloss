@@ -8,7 +8,7 @@ export function ThemeProvider({
   ...props
 }: {
   children: React.ReactNode;
-  [prop: string]: any;
+  [prop: string]: unknown;
 }) {
   return <NextThemesProvider {...props}>{children}</NextThemesProvider>;
 } 

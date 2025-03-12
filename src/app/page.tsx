@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { X, Plus, User, LockKeyhole, Unlock, Users, Camera, Download, Check, Clock, Edit3 } from "lucide-react";
+import { X, Plus, User, LockKeyhole, Unlock, Users, Camera, Download, Check, Clock, Edit3, BarChart4 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import html2canvas from "html2canvas-pro";
 import ExportTemplate from "@/components/ExportTemplate";
@@ -121,16 +121,83 @@ export default function Home() {
   const [customParticipantCount, setCustomParticipantCount] = useState<string>("");
   const [showParticipantDetails, setShowParticipantDetails] = useState<boolean>(true);
 
-  // Calculate meeting cost whenever inputs change
-  useEffect(() => {
-    calculateCost();
-  }, [participants, duration, timeUnit, useExactRates]);
-
   // Helper function to validate inputs
   const isValidInput = (value: string): boolean => {
     const num = parseFloat(value);
     return !isNaN(num) && num >= 1; // Minimum duration is 1
   };
+
+  // Helper function to calculate meeting cost
+  const calculateCost = () => {
+    // Only show errors if user has interacted with the form
+    if (!hasInteracted) {
+      setError(null);
+      return;
+    }
+    
+    // Check if we have valid input data
+    if (participants.length === 0) {
+      setTotalCost(null);
+      setError("Please add at least one participant");
+      return;
+    }
+
+    let totalHourlyRate = 0;
+    let invalidInput = false;
+
+    // Calculate total hourly rate based on participant rates
+    participants.forEach(participant => {
+      if (useExactRates) {
+        // Using exact hourly rates
+        const rate = participant.hourlyRate.trim();
+        if (rate === "" || isNaN(parseFloat(rate))) {
+          invalidInput = true;
+          return;
+        }
+        totalHourlyRate += parseFloat(rate);
+      } else {
+        // Using salary ranges
+        const range = participant.salaryRange;
+        if (!range) {
+          invalidInput = true;
+          return;
+        }
+        totalHourlyRate += getSalaryRangeMidpoint(range);
+      }
+    });
+
+    // Check if the duration is valid
+    const durationValue = duration.trim();
+    if (durationValue === "" || isNaN(parseFloat(durationValue))) {
+      setTotalCost(null);
+      setError("Please enter a valid duration");
+      return;
+    }
+
+    // Handle validation errors
+    if (invalidInput) {
+      setTotalCost(null);
+      setError(useExactRates ? "Please enter valid hourly rates" : "Please select salary ranges for all participants");
+      return;
+    }
+
+    // Convert duration to hours if needed
+    const durationInHours = timeUnit === "hours" 
+      ? parseFloat(durationValue) 
+      : parseFloat(durationValue) / 60;
+
+    // Calculate the total cost
+    const cost = totalHourlyRate * durationInHours;
+    setTotalCost(cost);
+    setError(null);
+  };
+
+  // Calculate meeting cost whenever inputs change
+  useEffect(() => {
+    if (isValidInput(duration)) {
+      calculateCost();
+    }
+  }, [duration, timeUnit, participants, useExactRates, calculateCost]);
 
   // Toggle between exact rates and salary ranges
   const toggleRateMode = () => {
@@ -341,52 +408,6 @@ export default function Home() {
     return (range.min + range.max) / 2;
   };
 
-  // Calculate the total meeting cost
-  const calculateCost = () => {
-    // Reset error
-    setError(null);
-    
-    // Validate duration input
-    if (!duration) {
-      setTotalCost(null);
-      return;
-    }
-    
-    if (!isValidInput(duration)) {
-      if (hasInteracted) {
-        setError("Please enter a valid duration (minimum 1)");
-      }
-      setTotalCost(null);
-      return;
-    }
-    
-    // Check if any participant doesn't have valid rate information
-    const invalidParticipant = participants.some(p => {
-      if (useExactRates) {
-        return !p.hourlyRate || !isValidInput(p.hourlyRate);
-      } else {
-        return !p.salaryRange;
-      }
-    });
-    
-    if (invalidParticipant && hasInteracted) {
-      setError("Please set a valid rate for all participants");
-      setTotalCost(null);
-      return;
-    }
-    
-    // Calculate individual costs and sum them up to ensure consistency
-    let sum = 0;
-    for (const participant of participants) {
-      sum += calculateIndividualCost(participant);
-    }
-    
-    // Round to 2 decimal places
-    const roundedTotalCost = parseFloat(sum.toFixed(2));
-    
-    setTotalCost(roundedTotalCost);
-  };
-
   // Generate a display label for a participant's rate
   const getParticipantRateDisplay = (participant: Participant, index: number) => {
     if (useExactRates) {
@@ -428,7 +449,7 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-start p-6 bg-background">
+    <main className="flex min-h-screen flex-col items-center justify-start p-8 bg-background">
       {/* Hidden export template for high-quality image capture */}
       <div className="fixed left-[-9999px] top-0 overflow-hidden">
         <ExportTemplate
@@ -447,184 +468,105 @@ export default function Home() {
         />
       </div>
     
-      <Card className="w-full max-w-5xl relative">
-        <div className="absolute top-4 right-4">
+      <Card className="w-full max-w-4xl relative shadow-sm border">
+        <div className="absolute top-5 right-5 z-10">
           <ThemeToggle />
         </div>
         
-        <CardHeader className="pb-2">
+        <CardHeader className="pb-4">
           <div className="flex flex-col items-center">
-            <CardTitle className="text-center text-2xl font-bold">Major Financial Decision: $390 per Meeting</CardTitle>
-            <CardDescription className="text-center">Discover how much your meetings are really costing you</CardDescription>
-            
-            <div className="flex items-center gap-2 mt-4">
-              <Button
-                type="button"
-                variant={useExactRates ? "default" : "outline"}
-                size="sm"
-                className="flex items-center gap-1"
-                onClick={toggleRateMode}
-              >
-                <Unlock className="h-4 w-4" />
-                Exact Rates
-              </Button>
-              <Button
-                type="button"
-                variant={!useExactRates ? "default" : "outline"}
-                size="sm"
-                className="flex items-center gap-1"
-                onClick={toggleRateMode}
-              >
-                <LockKeyhole className="h-4 w-4" />
-                Privacy Mode
-              </Button>
-            </div>
-            
-            {!useExactRates && (
-              <p className="text-xs text-muted-foreground mt-2 max-w-md text-center">
-                Privacy mode uses salary ranges instead of exact figures - perfect for sharing with colleagues
-              </p>
-            )}
+            <CardTitle className="text-center text-3xl font-bold tracking-tight">Timeloss</CardTitle>
+            <CardDescription className="text-center mb-2 text-base opacity-80">
+              Calculate the true cost of your meetings
+            </CardDescription>
           </div>
         </CardHeader>
         
-        {/* Cost display at the top for immediate visibility */}
-        <div className="w-full px-6 py-4 bg-secondary/30 border-y">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <h3 className="font-medium text-sm text-muted-foreground">Your meeting costs</h3>
-              <p className="text-3xl font-bold">
-                ${totalCost !== null ? formatMoney(totalCost) : "0"}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                {participants.length} {participants.length === 1 ? 'person' : 'people'} for {duration || '1'} {timeUnit}
-              </p>
+        <CardContent className="px-8 pt-2 pb-8 space-y-10">
+          {/* Step 1: Meeting Duration */}
+          <div className="w-full">
+            <div className="flex items-center gap-2 mb-4">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground text-sm">1</span>
+                <Clock className="h-5 w-5 mr-1" /> Set Meeting Duration
+              </h2>
             </div>
             
-            <div className="text-right">
-              <p className="text-sm text-muted-foreground">Per person</p>
-              <p className="font-semibold">
-                ${totalCost !== null && participants.length > 0 
-                  ? formatMoney(totalCost / participants.length) 
-                  : "0"}
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Total time spent: {calculatePersonHours()}
-              </p>
-            </div>
-            
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="duration" className="text-sm flex items-center gap-1">
-                  <Clock className="h-3.5 w-3.5" /> Duration:
-                </Label>
-                <div className="flex items-center">
-                  <Input
-                    id="duration"
-                    type="number"
-                    placeholder="1"
-                    value={duration}
-                    onChange={(e) => handleDurationChange(e.target.value)}
-                    min="1"
-                    step="1"
-                    className="w-20 h-8"
-                  />
-                  
-                  <Select value={timeUnit} onValueChange={setTimeUnit}>
-                    <SelectTrigger id="timeUnit" className="w-24 h-8 ml-2">
-                      <SelectValue placeholder="Unit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="hours">Hours</SelectItem>
-                      <SelectItem value="minutes">Minutes</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-end mt-2 gap-2">
-                {/* Export image name input */}
-                <div className="flex items-center mr-2">
-                  {isEditingMeetingName ? (
-                    <div className="flex items-center">
-                      <Input
-                        value={meetingName}
-                        onChange={(e) => setMeetingName(e.target.value)}
-                        className="h-8 w-48 text-xs"
-                        placeholder="Meeting name for export"
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 w-8 p-0 ml-1"
-                        onClick={() => setIsEditingMeetingName(false)}
-                      >
-                        <Check className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="ghost"
-                      className="h-8 gap-1 text-xs"
-                      onClick={() => setIsEditingMeetingName(true)}
-                    >
-                      <Edit3 className="h-3.5 w-3.5" /> {meetingName}
-                    </Button>
-                  )}
-                </div>
+            <div className="flex items-center gap-3 bg-muted/10 p-6 rounded-xl">
+              <Label htmlFor="duration" className="text-base font-medium whitespace-nowrap">Duration:</Label>
+              <div className="flex items-center">
+                <Input
+                  id="duration"
+                  type="number"
+                  placeholder="1"
+                  value={duration}
+                  onChange={(e) => handleDurationChange(e.target.value)}
+                  min="1"
+                  step="1"
+                  className="w-24 h-10 rounded-lg text-lg"
+                />
                 
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  className="h-8 gap-1 text-xs"
-                  onClick={() => exportAsImage('png')}
-                  disabled={!!exportStatus}
-                >
-                  {exportStatus ? exportStatus : <>
-                    <Camera className="h-3.5 w-3.5" /> Export as Image
-                  </>}
-                </Button>
+                <Select value={timeUnit} onValueChange={setTimeUnit}>
+                  <SelectTrigger id="timeUnit" className="w-32 h-10 ml-2 rounded-lg text-lg">
+                    <SelectValue placeholder="Unit" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="hours">Hours</SelectItem>
+                    <SelectItem value="minutes">Minutes</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
           
-          {error && <p className="text-sm font-medium text-red-500 mt-2">{error}</p>}
-        </div>
-        
-        <CardContent className="pt-6">
-          <div className="space-y-4">
-            <div className="flex flex-col space-y-4">
-              {/* Participant management header */}
-              <div className="flex flex-wrap items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Label className="flex items-center gap-1 font-medium">
-                    <Users className="h-4 w-4" /> 
-                    Who's attending?
-                  </Label>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={toggleParticipantDetails}
-                    className="flex items-center gap-1"
-                  >
-                    {showParticipantDetails ? "Hide Details" : "Show Details"}
-                  </Button>
-                </div>
+          {/* Step 2: Meeting Participants */}
+          <div className="w-full">
+            <div className="flex items-center gap-2 mb-4">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground text-sm">2</span>
+                <Users className="h-5 w-5 mr-1" /> Add Participants
+              </h2>
+            </div>
+            
+            <div className="bg-muted/10 p-6 rounded-xl">
+              {/* Privacy mode toggle */}
+              <div className="flex items-center justify-center gap-3 mb-4 border-b pb-4 border-border/30">
+                <Button
+                  type="button"
+                  variant={useExactRates ? "default" : "outline"}
+                  size="sm"
+                  className="flex items-center gap-1 px-5 py-2 h-9 rounded-full"
+                  onClick={toggleRateMode}
+                >
+                  <Unlock className="h-4 w-4 mr-1" />
+                  Exact Rates
+                </Button>
+                <Button
+                  type="button"
+                  variant={!useExactRates ? "default" : "outline"}
+                  size="sm"
+                  className="flex items-center gap-1 px-5 py-2 h-9 rounded-full"
+                  onClick={toggleRateMode}
+                >
+                  <LockKeyhole className="h-4 w-4 mr-1" />
+                  Privacy Mode
+                </Button>
+                
+                {!useExactRates && (
+                  <p className="text-xs text-muted-foreground ml-2">
+                    Privacy mode uses salary ranges instead of exact figures
+                  </p>
+                )}
               </div>
               
-              {/* Team size selection */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Team size quick selection */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
                 <div className="space-y-2">
-                  <Label htmlFor="quickSet" className="text-sm block">Team style:</Label>
+                  <Label htmlFor="quickSet" className="text-sm block font-medium">Team style:</Label>
                   <Select onValueChange={(val) => {
                     setParticipantCount(parseInt(val));
                   }}>
-                    <SelectTrigger id="quickSet" className="w-full">
+                    <SelectTrigger id="quickSet" className="w-full rounded-lg">
                       <SelectValue placeholder="Choose size" />
                     </SelectTrigger>
                     <SelectContent>
@@ -638,7 +580,7 @@ export default function Home() {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label className="text-sm block">Exact number:</Label>
+                  <Label className="text-sm block font-medium">Exact number:</Label>
                   <div className="flex items-center w-full">
                     <Input
                       type="number"
@@ -646,6 +588,7 @@ export default function Home() {
                       value={customParticipantCount}
                       onChange={(e) => setCustomParticipantCount(e.target.value)}
                       min="1"
+                      className="rounded-lg"
                     />
                     <Button 
                       type="button" 
@@ -653,7 +596,7 @@ export default function Home() {
                       size="sm" 
                       onClick={handleSetCustomParticipants}
                       disabled={!customParticipantCount || parseInt(customParticipantCount) <= 0}
-                      className="flex items-center gap-1 ml-2"
+                      className="flex items-center gap-1 ml-2 rounded-lg"
                     >
                       <Check className="h-3.5 w-3.5" />
                       Set
@@ -664,20 +607,20 @@ export default function Home() {
                 <div className="flex items-end justify-start md:justify-end">
                   <Button 
                     type="button" 
-                    variant="outline" 
+                    variant="default" 
                     onClick={addParticipant}
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-1 rounded-full"
                   >
-                    <Plus className="h-3.5 w-3.5" /> Add Person
+                    <Plus className="h-3.5 w-3.5 mr-1" /> Add Person
                   </Button>
                 </div>
               </div>
               
               {/* Bulk rate setting */}
-              <div className="bg-muted/30 p-3 rounded-md">
-                <div className="flex flex-wrap md:flex-nowrap items-center gap-3">
+              <div className="p-4 rounded-xl mb-4 bg-muted/20">
+                <div className="flex flex-wrap md:flex-nowrap items-center gap-4">
                   <div className="flex items-center">
-                    <Label className="whitespace-nowrap flex items-center gap-1 min-w-[120px]">
+                    <Label className="whitespace-nowrap flex items-center gap-1 min-w-[120px] font-medium">
                       <span>{useExactRates ? "Everyone earns:" : "Everyone's in range:"}</span>
                     </Label>
                   </div>
@@ -688,20 +631,20 @@ export default function Home() {
                         <Input
                           type="number"
                           placeholder="e.g., 50"
-                          className="w-full max-w-40"
+                          className="w-full max-w-40 rounded-lg"
                           min="1"
                           step="1"
                           onChange={(e) => {
                             if (e.target.value) applyRateToAll(e.target.value);
                           }}
                         />
-                        <span className="ml-2 text-sm">$/hr</span>
+                        <span className="ml-2 text-sm font-medium">$/hr</span>
                       </div>
                     ) : (
                       <Select
                         onValueChange={(value) => applyRateToAll(value)}
                       >
-                        <SelectTrigger className="w-full max-w-60">
+                        <SelectTrigger className="w-full max-w-60 rounded-lg">
                           <SelectValue placeholder="Select range" />
                         </SelectTrigger>
                         <SelectContent>
@@ -722,128 +665,235 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-            </div>
-            
-            {/* Participant details - visible by default now */}
-            {showParticipantDetails && (
-              <div className="mt-6 space-y-3">
-                {participants.map((participant, index) => (
-                  <div key={participant.id} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end border p-3 rounded-md bg-card">
-                    <div className="md:col-span-5">
-                      <Label htmlFor={`name-${participant.id}`} className="text-sm mb-1 block">Name (Optional)</Label>
-                      <div className="flex items-center">
-                        <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                        <Input
-                          id={`name-${participant.id}`}
-                          value={participant.name}
-                          onChange={(e) => updateParticipant(participant.id, "name", e.target.value)}
-                          placeholder={`Person ${index + 1}`}
-                          className="w-full"
-                        />
-                      </div>
-                    </div>
-                    
-                    <div className="md:col-span-6">
-                      {useExactRates ? (
-                        <>
-                          <Label htmlFor={`rate-${participant.id}`} className="text-sm mb-1 block">Hourly Rate (USD)</Label>
-                          <Input
-                            id={`rate-${participant.id}`}
-                            type="number"
-                            placeholder="e.g., 50"
-                            value={participant.hourlyRate}
-                            onChange={(e) => updateParticipant(participant.id, "hourlyRate", e.target.value)}
-                            min="1"
-                            step="1"
-                            className="w-full"
-                          />
-                        </>
-                      ) : (
-                        <>
-                          <Label htmlFor={`range-${participant.id}`} className="text-sm mb-1 block">Salary Range</Label>
-                          <Select
-                            value={participant.salaryRange}
-                            onValueChange={(value) => updateParticipant(participant.id, "salaryRange", value)}
+              
+              {/* Participant details */}
+              <div className="border-t border-border/30 pt-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-medium">Participant Details</h3>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={toggleParticipantDetails}
+                    className="flex items-center gap-1 rounded-full text-xs"
+                  >
+                    {showParticipantDetails ? "Hide Details" : "Show Details"}
+                  </Button>
+                </div>
+                
+                {showParticipantDetails && (
+                  <div className="mt-3 space-y-3">
+                    {participants.map((participant, index) => (
+                      <div key={participant.id} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end p-4 rounded-xl bg-muted/5">
+                        <div className="md:col-span-5">
+                          <Label htmlFor={`name-${participant.id}`} className="text-sm mb-1 block">Name (Optional)</Label>
+                          <div className="flex items-center">
+                            <User className="h-4 w-4 mr-2 text-muted-foreground" />
+                            <Input
+                              id={`name-${participant.id}`}
+                              value={participant.name}
+                              onChange={(e) => updateParticipant(participant.id, "name", e.target.value)}
+                              placeholder={`Person ${index + 1}`}
+                              className="w-full rounded-lg"
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="md:col-span-6">
+                          {useExactRates ? (
+                            <>
+                              <Label htmlFor={`rate-${participant.id}`} className="text-sm mb-1 block">Hourly Rate (USD)</Label>
+                              <Input
+                                id={`rate-${participant.id}`}
+                                type="number"
+                                placeholder="e.g., 50"
+                                value={participant.hourlyRate}
+                                onChange={(e) => updateParticipant(participant.id, "hourlyRate", e.target.value)}
+                                min="1"
+                                step="1"
+                                className="w-full rounded-lg"
+                              />
+                            </>
+                          ) : (
+                            <>
+                              <Label htmlFor={`range-${participant.id}`} className="text-sm mb-1 block">Salary Range</Label>
+                              <Select
+                                value={participant.salaryRange}
+                                onValueChange={(value) => updateParticipant(participant.id, "salaryRange", value)}
+                              >
+                                <SelectTrigger id={`range-${participant.id}`} className="w-full rounded-lg">
+                                  <SelectValue placeholder="Select range" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {SALARY_RANGES.map((range) => (
+                                    <SelectItem key={range.value} value={range.value}>
+                                      {range.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </>
+                          )}
+                        </div>
+                        
+                        <div className="md:col-span-1 flex justify-end">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="text-muted-foreground hover:text-red-500 h-9 w-9 rounded-full"
+                            onClick={() => removeParticipant(participant.id)}
+                            disabled={participants.length === 1}
                           >
-                            <SelectTrigger id={`range-${participant.id}`} className="w-full">
-                              <SelectValue placeholder="Select range" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {SALARY_RANGES.map((range) => (
-                                <SelectItem key={range.value} value={range.value}>
-                                  {range.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </>
-                      )}
-                    </div>
-                    
-                    <div className="md:col-span-1 flex justify-end">
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="text-red-500 h-9 w-9"
-                        onClick={() => removeParticipant(participant.id)}
-                        disabled={participants.length === 1}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </CardContent>
-        
-        <CardFooter className="flex flex-col space-y-4 border-t pt-6">
-          {/* Cost breakdown */}
-          {totalCost !== null && participants.length > 0 && (
-            <div className="w-full">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold flex items-center gap-1">
-                  <span>Breakdown</span>
-                  {participants.length > 1 && <span className="text-xs text-muted-foreground">
-                    (Showing how the ${formatMoney(totalCost)} total is distributed)
-                  </span>}
-                </h3>
-                {!useExactRates && (
-                  <p className="text-xs text-muted-foreground italic">
-                    *Using midpoint of each range for calculations
-                  </p>
                 )}
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {participants.map((participant, index) => {
-                  // Skip if no valid rate info
-                  if ((useExactRates && !participant.hourlyRate) || 
-                      (!useExactRates && !participant.salaryRange)) {
-                    return null;
-                  }
-                  
-                  const individualCost = calculateIndividualCost(participant);
-                  const rateDisplay = getParticipantRateDisplay(participant, index);
-                  
-                  return (
-                    <div key={participant.id} className="flex justify-between text-sm">
-                      <span>{participant.name || `Person ${index + 1}`} ({rateDisplay})</span>
-                      <span>${formatMoney(individualCost)}</span>
-                    </div>
-                  );
-                })}
+            </div>
+          </div>
+          
+          {/* Step 3: Results */}
+          <div className="w-full">
+            <div className="flex items-center gap-2 mb-4">
+              <h2 className="text-xl font-semibold flex items-center gap-2">
+                <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground text-sm">3</span>
+                <BarChart4 className="h-5 w-5 mr-1" /> Meeting Cost Results
+              </h2>
+            </div>
+            
+            <div className="bg-muted/10 p-6 rounded-xl">
+              {/* Cost display */}
+              <div className="flex flex-wrap items-center justify-between gap-8 mb-6 bg-background/40 p-6 rounded-xl shadow-sm">
+                <div className="p-3 rounded-xl">
+                  <h3 className="font-medium text-lg mb-1">Total Meeting Cost</h3>
+                  <p className="text-4xl font-bold tracking-tight text-primary">
+                    ${totalCost !== null ? formatMoney(totalCost) : "0"}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {participants.length} {participants.length === 1 ? 'person' : 'people'} × {duration || '1'} {timeUnit}
+                  </p>
+                </div>
+                
+                <div className="text-right p-3 rounded-xl">
+                  <h3 className="font-medium text-lg mb-1">Per Person Average</h3>
+                  <p className="text-3xl font-semibold tracking-tight">
+                    ${totalCost !== null && participants.length > 0 
+                      ? formatMoney(totalCost / participants.length) 
+                      : "0"}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Total person-hours: {calculatePersonHours()}
+                  </p>
+                </div>
               </div>
               
-              {participants.length > 2 && (
-                <p className="text-xs text-muted-foreground mt-3 italic">
-                  That's ${formatMoney(totalCost / 60)} per minute for this group
-                </p>
+              {/* Meeting name and export */}
+              <div className="flex justify-between items-center mb-4 border-t border-b py-4 border-border/30">
+                <div className="flex items-center">
+                  {isEditingMeetingName ? (
+                    <div className="flex items-center">
+                      <Input
+                        value={meetingName}
+                        onChange={(e) => setMeetingName(e.target.value)}
+                        className="h-10 w-64 rounded-lg"
+                        placeholder="Meeting name for export"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="ghost"
+                        className="h-10 w-10 p-0 ml-1"
+                        onClick={() => setIsEditingMeetingName(false)}
+                      >
+                        <Check className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="ghost"
+                      className="h-10 gap-1 px-4 text-base"
+                      onClick={() => setIsEditingMeetingName(true)}
+                    >
+                      <Edit3 className="h-4 w-4 mr-2" /> {meetingName}
+                    </Button>
+                  )}
+                </div>
+                
+                <Button
+                  type="button"
+                  size="default"
+                  variant="outline"
+                  className="h-10 gap-1 px-4"
+                  onClick={() => exportAsImage('png')}
+                  disabled={!!exportStatus}
+                >
+                  {exportStatus ? exportStatus : <>
+                    <Camera className="h-4 w-4 mr-2" /> Export as Image
+                  </>}
+                </Button>
+              </div>
+              
+              {/* Cost breakdown */}
+              {totalCost !== null && participants.length > 0 && (
+                <div className="w-full">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="font-semibold text-lg">
+                      Cost Breakdown
+                    </h3>
+                    {!useExactRates && (
+                      <p className="text-xs text-muted-foreground italic">
+                        *Using midpoint of each range for calculations
+                      </p>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {participants.map((participant, index) => {
+                      // Skip if no valid rate info
+                      if ((useExactRates && !participant.hourlyRate) || 
+                          (!useExactRates && !participant.salaryRange)) {
+                        return null;
+                      }
+                      
+                      const individualCost = calculateIndividualCost(participant);
+                      const rateDisplay = getParticipantRateDisplay(participant, index);
+                      
+                      return (
+                        <div key={participant.id} className="flex justify-between text-sm p-3 rounded-lg bg-background/40">
+                          <span className="font-medium">{participant.name || `Person ${index + 1}`} ({rateDisplay})</span>
+                          <span className="font-bold">${formatMoney(individualCost)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  
+                  {participants.length > 2 && (
+                    <p className="text-sm text-muted-foreground mt-4 p-3 rounded text-center bg-background/40">
+                      That's ${formatMoney(totalCost / 60)} per minute for this group
+                    </p>
+                  )}
+                </div>
               )}
             </div>
+          </div>
+          
+          {error && hasInteracted && (
+            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 p-4 rounded-lg">
+              <p className="text-sm font-medium text-red-600 dark:text-red-400">{error}</p>
+            </div>
           )}
+        </CardContent>
+        
+        <CardFooter className="px-8 py-4 flex justify-center border-t">
+          <p className="text-xs text-muted-foreground text-center">
+            Timeloss helps you visualize the real cost of meetings and make informed decisions.
+          </p>
         </CardFooter>
       </Card>
     </main>

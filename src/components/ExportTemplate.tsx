@@ -3,7 +3,7 @@
 import { forwardRef } from 'react';
 import { Participant } from '../types/types';
 import MeetingCostChart from './MeetingCostChart';
-import { Clock, DollarSign, Users, BrainCircuit, BarChart4, Timer, Wallet, TrendingUp } from 'lucide-react';
+import { Clock, Users, BrainCircuit, BarChart4, Timer, Wallet } from 'lucide-react';
 
 interface ExportTemplateProps {
   participants: Participant[];
@@ -66,7 +66,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
     
     // Calculate percentages for each participant based on the calculated total
     const participantPercentages = individualCosts.map(cost => 
-      parseFloat(((cost / calculatedTotalCost) * 100).toFixed(1))
+      calculatedTotalCost > 0 ? parseFloat(((cost / calculatedTotalCost) * 100).toFixed(1)) : 0
     );
     
     // Static title and subtitle for a more human touch
@@ -466,10 +466,6 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                   <MeetingCostChart
                     participants={participants}
                     totalCost={totalCost}
-                    duration={duration}
-                    timeUnit={timeUnit}
-                    useExactRates={useExactRates}
-                    getSalaryRangeMidpoint={getSalaryRangeMidpoint}
                     calculateIndividualCost={calculateIndividualCost}
                     isDarkMode={isDarkMode}
                   />
@@ -744,7 +740,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
           color: appleColors.textTertiary,
           fontWeight: 500
         }}>
-          Generated with Meeting Cost Calculator • {currentDate}
+          Generated with Timeloss • {currentDate}
         </div>
       </div>
     );
