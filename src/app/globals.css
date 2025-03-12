@@ -12,11 +12,11 @@
 }
 
 html {
-  transition: background-color 0.5s ease, color 0.5s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 body {
-  transition: background-color 0.5s ease, color 0.5s ease;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 :root {
@@ -101,7 +101,7 @@ body {
 :root,
 .dark {
   transition-property: color, background-color;
-  transition-duration: 0.5s;
+  transition-duration: 0.2s;
   transition-timing-function: ease;
 }
 
@@ -115,7 +115,7 @@ body {
 .border,
 .border-border {
   transition-property: color, background-color, border-color;
-  transition-duration: 0.5s;
+  transition-duration: 0.2s;
   transition-timing-function: ease;
 }
 
@@ -123,5 +123,5 @@ body {
 * {
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
   transition-timing-function: ease;
-  transition-duration: 0.3s;
+  transition-duration: 0.2s;
 }
