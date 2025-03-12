@@ -418,7 +418,7 @@ export default function Home() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-start p-8 bg-background">
+    <main className="flex min-h-screen flex-col items-center justify-start p-4 sm:p-8 bg-background">
       {/* Hidden export template for high-quality image capture */}
       <div className="fixed left-[-9999px] top-0 overflow-hidden">
         <ExportTemplate
@@ -438,32 +438,32 @@ export default function Home() {
       </div>
     
       <Card className="w-full max-w-4xl relative" variant="borderless">
-        <div className="absolute top-5 right-5 z-10">
+        <div className="absolute top-3 sm:top-5 right-3 sm:right-5 z-10">
           <ThemeToggle />
         </div>
         
-        <CardHeader className="pb-4">
+        <CardHeader className="pb-2 sm:pb-4 px-4 sm:px-6">
           <div className="flex flex-col items-center">
-            <CardTitle className="text-center text-3xl font-bold tracking-tight">Timeloss</CardTitle>
-            <CardDescription className="text-center mb-2 text-base opacity-80">
+            <CardTitle className="text-center text-2xl sm:text-3xl font-bold tracking-tight">Timeloss</CardTitle>
+            <CardDescription className="text-center mb-2 text-sm sm:text-base opacity-80">
               Calculate the true cost of your meetings
             </CardDescription>
           </div>
         </CardHeader>
         
-        <CardContent className="px-8 pt-2 pb-8 space-y-10">
+        <CardContent className="px-4 sm:px-8 pt-2 pb-6 sm:pb-8 space-y-8 sm:space-y-10">
           {/* Step 1: Meeting Duration */}
           <div className="w-full">
-            <div className="flex items-center gap-2 mb-4">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground text-sm">1</span>
-                <Clock className="h-5 w-5 mr-1" /> Set Meeting Duration
+            <div className="flex items-center gap-2 mb-3 sm:mb-4">
+              <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+                <span className="flex items-center justify-center w-6 sm:w-7 h-6 sm:h-7 rounded-full bg-primary text-primary-foreground text-sm">1</span>
+                <Clock className="h-4 sm:h-5 w-4 sm:w-5 mr-1" /> Set Meeting Duration
               </h2>
             </div>
             
-            <div className="flex items-center gap-3 bg-muted/10 p-6 rounded-xl">
-              <Label htmlFor="duration" className="text-base font-medium whitespace-nowrap">Duration:</Label>
-              <div className="flex items-center">
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3 bg-muted/10 p-4 sm:p-6 rounded-xl">
+              <Label htmlFor="duration" className="text-sm sm:text-base font-medium whitespace-nowrap">Duration:</Label>
+              <div className="flex items-center w-full sm:w-auto mt-1 sm:mt-0">
                 <Input
                   id="duration"
                   type="number"
@@ -472,11 +472,11 @@ export default function Home() {
                   onChange={(e) => handleDurationChange(e.target.value)}
                   min="1"
                   step="1"
-                  className="w-24 h-10 rounded-lg text-lg"
+                  className="w-24 h-10 rounded-lg text-base sm:text-lg"
                 />
                 
                 <Select value={timeUnit} onValueChange={setTimeUnit}>
-                  <SelectTrigger id="timeUnit" className="w-32 h-10 ml-2 rounded-lg text-lg">
+                  <SelectTrigger id="timeUnit" className="w-28 sm:w-32 h-10 ml-2 rounded-lg text-base sm:text-lg">
                     <SelectValue placeholder="Unit" />
                   </SelectTrigger>
                   <SelectContent>
@@ -490,14 +490,14 @@ export default function Home() {
           
           {/* Step 2: Meeting Participants */}
           <div className="w-full">
-            <div className="flex items-center gap-2 mb-4">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground text-sm">2</span>
-                <Users className="h-5 w-5 mr-1" /> Add Participants
+            <div className="flex items-center gap-2 mb-3 sm:mb-4">
+              <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+                <span className="flex items-center justify-center w-6 sm:w-7 h-6 sm:h-7 rounded-full bg-primary text-primary-foreground text-sm">2</span>
+                <Users className="h-4 sm:h-5 w-4 sm:w-5 mr-1" /> Add Participants
               </h2>
             </div>
             
-            <div className="bg-muted/10 p-6 rounded-xl">
+            <div className="bg-muted/10 p-4 sm:p-6 rounded-xl">
               {/* Privacy mode toggle */}
               <div className="flex flex-col space-y-2 mb-4 border-b pb-4 border-border/30">
                 <div className="flex items-center justify-center gap-3">
@@ -505,31 +505,31 @@ export default function Home() {
                     type="button"
                     variant={useExactRates ? "default" : "outline"}
                     size="sm"
-                    className="flex items-center gap-1 px-5 py-2 h-9 rounded-full transition-all duration-300 ease-in-out"
+                    className="flex items-center gap-1 px-3 sm:px-5 py-2 h-9 rounded-full transition-all duration-200 ease-in-out"
                     onClick={toggleRateMode}
                   >
                     <Unlock className="h-4 w-4 mr-1" />
-                    Exact Rates
+                    <span className="whitespace-nowrap">Exact Rates</span>
                   </Button>
                   <Button
                     type="button"
                     variant={!useExactRates ? "default" : "outline"}
                     size="sm"
-                    className="flex items-center gap-1 px-5 py-2 h-9 rounded-full transition-all duration-300 ease-in-out"
+                    className="flex items-center gap-1 px-3 sm:px-5 py-2 h-9 rounded-full transition-all duration-200 ease-in-out"
                     onClick={toggleRateMode}
                   >
                     <LockKeyhole className="h-4 w-4 mr-1" />
-                    Privacy Mode
+                    <span className="whitespace-nowrap">Privacy Mode</span>
                   </Button>
                 </div>
                 
-                <p className="text-xs text-muted-foreground text-center transition-opacity duration-300 ease-in-out">
+                <p className="text-xs text-muted-foreground text-center transition-opacity duration-200 ease-in-out">
                   {!useExactRates ? "Privacy mode uses salary ranges instead of exact figures" : "Exact rates mode uses precise hourly costs"}
                 </p>
               </div>
               
               {/* Team size quick selection */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-4">
+              <div className="grid grid-cols-1 gap-5 mb-4">
                 <div className="space-y-2">
                   <Label htmlFor="quickSet" className="text-sm block font-medium">Team style:</Label>
                   <Select onValueChange={(val) => {
@@ -573,12 +573,12 @@ export default function Home() {
                   </div>
                 </div>
                 
-                <div className="flex items-end justify-start md:justify-end">
+                <div className="flex justify-center sm:justify-start mt-2">
                   <Button 
                     type="button" 
                     variant="default" 
                     onClick={addParticipant}
-                    className="flex items-center gap-1 rounded-full"
+                    className="flex items-center gap-1 rounded-full w-full sm:w-auto"
                   >
                     <Plus className="h-3.5 w-3.5 mr-1" /> Add Person
                   </Button>
@@ -586,21 +586,21 @@ export default function Home() {
               </div>
               
               {/* Bulk rate setting */}
-              <div className="p-4 rounded-xl mb-4 bg-muted/20">
-                <div className="flex flex-wrap md:flex-nowrap items-center gap-4">
-                  <div className="flex items-center">
-                    <Label className="whitespace-nowrap flex items-center gap-1 min-w-[120px] font-medium">
-                      <span>{useExactRates ? "Everyone earns:" : "Everyone&apos;s in range:"}</span>
+              <div className="p-3 sm:p-4 rounded-xl mb-4 bg-muted/20">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                  <div className="flex items-center w-full sm:w-auto">
+                    <Label className="whitespace-nowrap flex items-center gap-1 text-sm font-medium">
+                      <span>{useExactRates ? "Everyone earns:" : "Everyone's in range:"}</span>
                     </Label>
                   </div>
                   
-                  <div className="flex-1 transition-all duration-300 ease-in-out">
+                  <div className="w-full sm:flex-1 transition-all duration-200 ease-in-out">
                     {useExactRates ? (
-                      <div className="flex items-center animate-in fade-in duration-300">
+                      <div className="flex items-center animate-in fade-in duration-200 w-full">
                         <Input
                           type="number"
                           placeholder="e.g., 50"
-                          className="w-full max-w-40 rounded-lg"
+                          className="w-full sm:max-w-40 rounded-lg"
                           min="1"
                           step="1"
                           onChange={(e) => {
@@ -610,11 +610,11 @@ export default function Home() {
                         <span className="ml-2 text-sm font-medium">$/hr</span>
                       </div>
                     ) : (
-                      <div className="animate-in fade-in duration-300">
+                      <div className="animate-in fade-in duration-200 w-full">
                         <Select
                           onValueChange={(value) => applyRateToAll(value)}
                         >
-                          <SelectTrigger className="w-full max-w-60 rounded-lg">
+                          <SelectTrigger className="w-full sm:max-w-60 rounded-lg">
                             <SelectValue placeholder="Select range" />
                           </SelectTrigger>
                           <SelectContent>
@@ -629,7 +629,7 @@ export default function Home() {
                     )}
                   </div>
                   
-                  <div className="flex items-center">
+                  <div className="w-full sm:w-auto text-center sm:text-left">
                     <p className="text-xs text-muted-foreground">
                       {participants.length > 1 && "Applies to all " + participants.length + " attendees"}
                     </p>
@@ -646,17 +646,17 @@ export default function Home() {
                     variant="outline" 
                     size="sm" 
                     onClick={toggleParticipantDetails}
-                    className="flex items-center gap-1 rounded-full text-xs"
+                    className="flex items-center gap-1 rounded-full text-xs px-3 sm:px-4 py-1"
                   >
                     {showParticipantDetails ? "Hide Details" : "Show Details"}
                   </Button>
                 </div>
                 
                 {showParticipantDetails && (
-                  <div className="mt-3 space-y-3">
+                  <div className="mt-3 space-y-4">
                     {participants.map((participant, index) => (
-                      <div key={participant.id} className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end p-4 rounded-xl bg-muted/5">
-                        <div className="md:col-span-5">
+                      <div key={participant.id} className="grid grid-cols-1 gap-3 items-start p-3 sm:p-4 rounded-xl bg-muted/5">
+                        <div className="w-full">
                           <Label htmlFor={`name-${participant.id}`} className="text-sm mb-1 block">Name (Optional)</Label>
                           <div className="flex items-center">
                             <User className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -670,9 +670,9 @@ export default function Home() {
                           </div>
                         </div>
                         
-                        <div className="md:col-span-6 transition-all duration-300 ease-in-out">
+                        <div className="w-full transition-all duration-200 ease-in-out">
                           {useExactRates ? (
-                            <div className="animate-in fade-in duration-300">
+                            <div className="animate-in fade-in duration-200">
                               <Label htmlFor={`rate-${participant.id}`} className="text-sm mb-1 block">Hourly Rate (USD)</Label>
                               <Input
                                 id={`rate-${participant.id}`}
@@ -686,7 +686,7 @@ export default function Home() {
                               />
                             </div>
                           ) : (
-                            <div className="animate-in fade-in duration-300">
+                            <div className="animate-in fade-in duration-200">
                               <Label htmlFor={`range-${participant.id}`} className="text-sm mb-1 block">Salary Range</Label>
                               <Select
                                 value={participant.salaryRange}
@@ -707,7 +707,7 @@ export default function Home() {
                           )}
                         </div>
                         
-                        <div className="md:col-span-1 flex justify-end">
+                        <div className="flex justify-end w-full">
                           <Button
                             type="button"
                             variant="ghost"
@@ -729,48 +729,48 @@ export default function Home() {
           
           {/* Step 3: Results */}
           <div className="w-full">
-            <div className="flex items-center gap-2 mb-4">
-              <h2 className="text-xl font-semibold flex items-center gap-2">
-                <span className="flex items-center justify-center w-7 h-7 rounded-full bg-primary text-primary-foreground text-sm">3</span>
-                <BarChart4 className="h-5 w-5 mr-1" /> Meeting Cost Results
+            <div className="flex items-center gap-2 mb-3 sm:mb-4">
+              <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+                <span className="flex items-center justify-center w-6 sm:w-7 h-6 sm:h-7 rounded-full bg-primary text-primary-foreground text-sm">3</span>
+                <BarChart4 className="h-4 sm:h-5 w-4 sm:w-5 mr-1" /> Meeting Cost Results
               </h2>
             </div>
             
-            <div className="bg-muted/10 p-6 rounded-xl">
+            <div className="bg-muted/10 p-4 sm:p-6 rounded-xl">
               {/* Cost display */}
-              <div className="flex flex-wrap items-center justify-between gap-8 mb-6 bg-background/40 p-6 rounded-xl shadow-sm">
-                <div className="p-3 rounded-xl">
-                  <h3 className="font-medium text-lg mb-1">Total Meeting Cost</h3>
-                  <p className="text-4xl font-bold tracking-tight text-primary">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 sm:gap-8 mb-6 bg-background/40 p-4 sm:p-6 rounded-xl shadow-sm">
+                <div className="p-2 sm:p-3 rounded-xl text-center sm:text-left">
+                  <h3 className="font-medium text-base sm:text-lg mb-1">Total Meeting Cost</h3>
+                  <p className="text-3xl sm:text-4xl font-bold tracking-tight text-primary">
                     ${totalCost !== null ? formatMoney(totalCost) : "0"}
                   </p>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                     {participants.length} {participants.length === 1 ? 'person' : 'people'} × {duration || '1'} {timeUnit}
                   </p>
                 </div>
                 
-                <div className="text-right p-3 rounded-xl">
-                  <h3 className="font-medium text-lg mb-1">Per Person Average</h3>
-                  <p className="text-3xl font-semibold tracking-tight">
+                <div className="text-center sm:text-right p-2 sm:p-3 rounded-xl">
+                  <h3 className="font-medium text-base sm:text-lg mb-1">Per Person Average</h3>
+                  <p className="text-2xl sm:text-3xl font-semibold tracking-tight">
                     ${totalCost !== null && participants.length > 0 
                       ? formatMoney(totalCost / participants.length) 
                       : "0"}
                   </p>
-                  <p className="text-sm text-muted-foreground mt-1">
+                  <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                     Total person-hours: {calculatePersonHours()}
                   </p>
                 </div>
               </div>
               
               {/* Meeting name and export */}
-              <div className="flex justify-between items-center mb-4 border-t border-b py-4 border-border/30">
-                <div className="flex items-center">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0 mb-4 border-t border-b py-4 border-border/30">
+                <div className="w-full sm:w-auto">
                   {isEditingMeetingName ? (
                     <div className="flex items-center">
                       <Input
                         value={meetingName}
                         onChange={(e) => setMeetingName(e.target.value)}
-                        className="h-10 w-64 rounded-lg"
+                        className="h-10 w-full sm:w-64 rounded-lg"
                         placeholder="Meeting name for export"
                       />
                       <Button
@@ -788,7 +788,7 @@ export default function Home() {
                       type="button"
                       size="sm"
                       variant="ghost"
-                      className="h-10 gap-1 px-4 text-base"
+                      className="h-10 gap-1 px-4 text-base w-full sm:w-auto justify-center sm:justify-start"
                       onClick={() => setIsEditingMeetingName(true)}
                     >
                       <Edit3 className="h-4 w-4 mr-2" /> {meetingName}
@@ -800,7 +800,7 @@ export default function Home() {
                   type="button"
                   size="default"
                   variant="outline"
-                  className="h-10 gap-1 px-4"
+                  className="h-10 gap-1 px-4 w-full sm:w-auto"
                   onClick={() => exportAsImage('png')}
                   disabled={!!exportStatus}
                 >
@@ -813,8 +813,8 @@ export default function Home() {
               {/* Cost breakdown */}
               {totalCost !== null && participants.length > 0 && (
                 <div className="w-full">
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="font-semibold text-lg">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
+                    <h3 className="font-semibold text-base sm:text-lg mb-2 sm:mb-0">
                       Cost Breakdown
                     </h3>
                     {!useExactRates && (
@@ -824,7 +824,7 @@ export default function Home() {
                     )}
                   </div>
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-3 sm:gap-4">
                     {participants.map((participant) => {
                       // Skip if no valid rate info
                       if ((useExactRates && !participant.hourlyRate) || 
@@ -845,7 +845,7 @@ export default function Home() {
                   </div>
                   
                   {participants.length > 2 && (
-                    <p className="text-sm text-muted-foreground mt-4 p-3 rounded text-center bg-background/40">
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-4 p-3 rounded text-center bg-background/40">
                       That&apos;s ${formatMoney(totalCost / 60)} per minute for this group
                     </p>
                   )}
@@ -855,13 +855,13 @@ export default function Home() {
           </div>
           
           {error && hasInteracted && (
-            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 p-4 rounded-lg">
+            <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 p-3 sm:p-4 rounded-lg">
               <p className="text-sm font-medium text-red-600 dark:text-red-400">{error}</p>
             </div>
           )}
         </CardContent>
         
-        <CardFooter className="px-8 py-4 flex justify-center border-t">
+        <CardFooter className="px-4 sm:px-8 py-3 sm:py-4 flex justify-center border-t">
           <p className="text-xs text-muted-foreground text-center">
             Timeloss helps you visualize the real cost of meetings and make informed decisions.
           </p>
