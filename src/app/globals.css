@@ -11,12 +11,12 @@
   }
 }
 
-html {
-  transition: background-color 0.2s ease, color 0.2s ease;
-}
-
-body {
-  transition: background-color 0.2s ease, color 0.2s ease;
+/* Core transitions for theme switching */
+html,
+body,
+:root,
+.dark {
+  transition: background-color 0.2s ease, color 0.2s ease !important;
 }
 
 :root {
@@ -97,31 +97,33 @@ body {
   --sidebar-ring: oklch(0.439 0 0);
 }
 
-/* Add transitions to theme color properties in CSS variables */
-:root,
-.dark {
-  transition-property: color, background-color;
-  transition-duration: 0.2s;
-  transition-timing-function: ease;
+/* Specific text element transitions */
+p, h1, h2, h3, h4, h5, h6, span, a, button, label, input, select {
+  transition: color 0.2s ease !important;
 }
 
-/* Transition for specific UI elements */
+/* Specific UI element transitions */
 .bg-background,
 .bg-card,
 .bg-muted,
-.bg-primary,
-.text-foreground,
-.text-primary,
-.border,
-.border-border {
-  transition-property: color, background-color, border-color;
-  transition-duration: 0.2s;
-  transition-timing-function: ease;
+.bg-primary {
+  transition: background-color 0.2s ease !important;
 }
 
-/* Remove the universal transition to be more selective */
+.text-foreground,
+.text-primary,
+.text-muted-foreground {
+  transition: color 0.2s ease !important;
+}
+
+.border,
+.border-border {
+  transition: border-color 0.2s ease !important;
+}
+
+/* Only transition specific properties for all other elements */
 * {
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+  transition-property: background-color, border-color, text-decoration-color, fill, stroke;
   transition-timing-function: ease;
   transition-duration: 0.2s;
 }
