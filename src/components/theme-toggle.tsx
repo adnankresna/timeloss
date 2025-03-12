@@ -21,7 +21,7 @@ export function ThemeToggle() {
       size="icon"
       onClick={toggleTheme}
       aria-label="Toggle theme"
-      className="theme-toggle-btn relative overflow-hidden bg-background/70 backdrop-blur-sm dark:bg-background/50"
+      className="theme-toggle-btn relative overflow-hidden bg-background bg-opacity-70 backdrop-blur-sm dark:bg-background dark:bg-opacity-50"
     >
       <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all duration-200 dark:-rotate-90 dark:scale-0" />
       <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all duration-200 dark:rotate-0 dark:scale-100" />

@@ -25,8 +25,8 @@
   }
   
   .frosted-glass {
-    @apply bg-background/60 backdrop-blur-lg shadow-lg 
-    border border-background/20 dark:border-foreground/10;
+    @apply bg-background bg-opacity-60 backdrop-blur-lg shadow-lg 
+    border border-background border-opacity-20 dark:border-foreground dark:border-opacity-10;
   }
 }
 
