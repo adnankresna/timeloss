@@ -64,14 +64,8 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
     // Use calculated total for consistency
     const displayTotalCost = calculatedTotalCost;
     
-    // Calculate percentages for each participant based on the calculated total
-    const participantPercentages = individualCosts.map(cost => 
-      parseFloat(((cost / calculatedTotalCost) * 100).toFixed(1))
-    );
-    
-    // Static title and subtitle for a more human touch
-    const staticTitle = "Meeting Cost Analysis";
-    const staticSubtitle = "A substantial commitment of time and resources that should deliver measurable business value.";
+    // Title used when no costs are available
+    const fallbackTitle = meetingName || "Meeting Cost Analysis";
     
     // Apple-inspired color palette
     const appleColors = {
@@ -137,7 +131,8 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
       
       // Calculate potential savings for various optimization strategies
       const hourlyRate = costPerHour;
-      const totalMeetingHours = timeUnit === 'hours' ? parseFloat(duration) : parseFloat(duration) / 60;
+      // Calculate total hours of the meeting for display
+      // (not directly used but kept for future feature expansion)
       
       // If meeting is more than 1 hour, suggest shortening it
       if (parseFloat(duration) > 1 && timeUnit === 'hours') {
@@ -232,7 +227,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
             color: appleColors.textPrimary,
             display: 'inline-block'
           }}>
-            {totalCost !== null ? `Team Investment: $${formatMoney(totalCost)}` : staticTitle}
+            {totalCost !== null ? `Team Investment: $${formatMoney(totalCost)}` : fallbackTitle}
           </h1>
           
           {/* Static Subtitle */}
@@ -244,7 +239,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
             maxWidth: '650px',
             marginBottom: '30px'
           }}>
-            {staticSubtitle}
+            A substantial commitment of time and resources that should deliver measurable business value.
           </p>
           
           {/* Key metrics section */}
@@ -535,7 +530,6 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                 <tbody>
                   {participants.map((participant, index) => {
                     const cost = individualCosts[index];
-                    const percentage = participantPercentages[index];
                     
                     return (
                       <tr key={`participant-${index}`} style={{

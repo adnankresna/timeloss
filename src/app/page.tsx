@@ -6,40 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { X, Plus, User, LockKeyhole, Unlock, Users, Camera, Download, Check, Clock, Edit3, BarChart4 } from "lucide-react";
+import { X, Plus, User, LockKeyhole, Unlock, Users, Camera, Check, Clock, Edit3, BarChart4 } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import html2canvas from "html2canvas-pro";
 import ExportTemplate from "@/components/ExportTemplate";
 import { Participant } from "@/types/types";
-
-// Add a custom style that will be used only for the export
-const exportStyles = `
-.cost-card-export {
-  background-color: var(--background);
-  border-radius: 0.5rem;
-  padding: 1.5rem;
-  border: 1px solid var(--border);
-  max-width: 600px;
-  margin: 0 auto;
-}
-.cost-card-export h2 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  text-align: center;
-}
-.cost-card-export .cost-value {
-  font-size: 2.5rem;
-  font-weight: bold;
-  text-align: center;
-  margin: 1rem 0;
-}
-.cost-card-export .cost-details {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 1rem;
-}
-`;
 
 // Salary range options
 const SALARY_RANGES = [
@@ -195,7 +166,7 @@ export default function Home() {
   // Calculate meeting cost whenever inputs change
   useEffect(() => {
     calculateCost();
-  }, [participants, duration, timeUnit, useExactRates]);
+  }, [participants, duration, timeUnit, useExactRates, calculateCost]);
 
   // Toggle between exact rates and salary ranges
   const toggleRateMode = () => {
@@ -407,7 +378,7 @@ export default function Home() {
   };
 
   // Generate a display label for a participant's rate
-  const getParticipantRateDisplay = (participant: Participant, index: number) => {
+  const getParticipantRateDisplay = (participant: Participant) => {
     if (useExactRates) {
       return `$${participant.hourlyRate}/hr`;
     } else {
@@ -619,7 +590,7 @@ export default function Home() {
                 <div className="flex flex-wrap md:flex-nowrap items-center gap-4">
                   <div className="flex items-center">
                     <Label className="whitespace-nowrap flex items-center gap-1 min-w-[120px] font-medium">
-                      <span>{useExactRates ? "Everyone earns:" : "Everyone's in range:"}</span>
+                      <span>{useExactRates ? "Everyone earns:" : "Everyone&apos;s in range:"}</span>
                     </Label>
                   </div>
                   
@@ -852,7 +823,7 @@ export default function Home() {
                   </div>
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {participants.map((participant, index) => {
+                    {participants.map((participant) => {
                       // Skip if no valid rate info
                       if ((useExactRates && !participant.hourlyRate) || 
                           (!useExactRates && !participant.salaryRange)) {
@@ -860,11 +831,11 @@ export default function Home() {
                       }
                       
                       const individualCost = calculateIndividualCost(participant);
-                      const rateDisplay = getParticipantRateDisplay(participant, index);
+                      const rateDisplay = getParticipantRateDisplay(participant);
                       
                       return (
                         <div key={participant.id} className="flex justify-between text-sm p-3 rounded-lg bg-background/40">
-                          <span className="font-medium">{participant.name || `Person ${index + 1}`} ({rateDisplay})</span>
+                          <span className="font-medium">{participant.name || `Person ${participants.indexOf(participant) + 1}`} ({rateDisplay})</span>
                           <span className="font-bold">${formatMoney(individualCost)}</span>
                         </div>
                       );
@@ -873,7 +844,7 @@ export default function Home() {
                   
                   {participants.length > 2 && (
                     <p className="text-sm text-muted-foreground mt-4 p-3 rounded text-center bg-background/40">
-                      That's ${formatMoney(totalCost / 60)} per minute for this group
+                      That&apos;s ${formatMoney(totalCost / 60)} per minute for this group
                     </p>
                   )}
                 </div>
