@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -105,8 +105,14 @@ export default function Home() {
     return !isNaN(num) && num >= 1; // Minimum duration is 1
   };
 
+  // Convert salary range to hourly rate
+  const getSalaryRangeMidpoint = (rangeValue: string): number => {
+    const range = SALARY_RANGES.find(r => r.value === rangeValue);
+    return range ? (range.min + range.max) / 2 : 0;
+  };
+
   // Helper function to calculate meeting cost
-  const calculateCost = () => {
+  const calculateCost = useCallback(() => {
     // Only show errors if user has interacted with the form
     if (!hasInteracted) {
       setError(null);
@@ -168,7 +174,7 @@ export default function Home() {
     const cost = totalHourlyRate * durationInHours;
     setTotalCost(cost);
     setError(null);
-  };
+  }, [participants, duration, timeUnit, useExactRates, hasInteracted, getSalaryRangeMidpoint]);
 
   // Calculate meeting cost whenever inputs change
   useEffect(() => {
@@ -392,13 +398,6 @@ export default function Home() {
       : hourlyRate * (timeDuration / 60);
   };
 
-  // Get the midpoint of a salary range for calculation
-  const getSalaryRangeMidpoint = (rangeValue: string): number => {
-    const range = SALARY_RANGES.find(r => r.value === rangeValue);
-    if (!range) return 0;
-    return (range.min + range.max) / 2;
-  };
-
   // Format money for display with appropriate precision and currency
   const formatMoney = (amount: number): string => {
     // Format with the selected currency using Intl.NumberFormat
@@ -524,8 +523,6 @@ export default function Home() {
           totalCost={totalCost}
           duration={duration}
           timeUnit={timeUnit}
-          useExactRates={useExactRates}
-          getSalaryRangeMidpoint={getSalaryRangeMidpoint}
           calculateIndividualCost={calculateIndividualCost}
           calculatePersonHours={calculatePersonHours}
           formatMoney={formatMoney}

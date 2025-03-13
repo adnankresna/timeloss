@@ -10,8 +10,6 @@ interface ExportTemplateProps {
   totalCost: number | null;
   duration: string;
   timeUnit: string;
-  useExactRates: boolean;
-  getSalaryRangeMidpoint: (range: string) => number;
   calculateIndividualCost: (participant: Participant) => number;
   calculatePersonHours: () => string;
   formatMoney: (amount: number) => string;
@@ -27,8 +25,6 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
     totalCost, 
     duration, 
     timeUnit, 
-    useExactRates, 
-    getSalaryRangeMidpoint, 
     calculateIndividualCost, 
     calculatePersonHours, 
     formatMoney,
