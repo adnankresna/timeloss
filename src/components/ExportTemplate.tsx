@@ -133,8 +133,6 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
       
       // Calculate potential savings for various optimization strategies
       const hourlyRate = costPerHour;
-      // Calculate total hours of the meeting for display
-      // (not directly used but kept for future feature expansion)
       
       // If meeting is more than 1 hour, suggest shortening it
       if (parseFloat(duration) > 1 && timeUnit === 'hours') {
@@ -690,12 +688,21 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                       flexShrink: 0,
                       fontSize: '14px'
                     }}>•</div>
-                    <div style={{
-                      fontSize: '13px',
-                      lineHeight: 1.5,
-                      color: appleColors.textPrimary
-                    }}>
-                      {insight.text}
+                    <div>
+                      <div style={{
+                        fontWeight: 600, 
+                        marginBottom: '4px',
+                        color: appleColors.textPrimary
+                      }}>
+                        {insight.text}
+                      </div>
+                      <div style={{ 
+                        color: appleColors.textSecondary,
+                        fontSize: '13px',
+                        lineHeight: '1.5'
+                      }}>
+                        {insight.source}
+                      </div>
                     </div>
                   </div>
                 ))}
