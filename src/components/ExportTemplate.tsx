@@ -1,7 +1,7 @@
 "use client";
 
 import { forwardRef } from 'react';
-import { Participant } from '../types/types';
+import { Participant, CurrencyInfo } from '../types/types';
 import MeetingCostChart from './MeetingCostChart';
 import { Clock, Users, BrainCircuit, BarChart4, Timer, Wallet } from 'lucide-react';
 
@@ -17,6 +17,7 @@ interface ExportTemplateProps {
   formatMoney: (amount: number) => string;
   meetingName?: string;
   isDarkMode: boolean;
+  currency: CurrencyInfo;
 }
 
 // Use forwardRef so we can pass a ref to this component to capture it with html2canvas
@@ -32,7 +33,8 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
     calculatePersonHours, 
     formatMoney,
     meetingName = 'Meeting Investment Analysis', 
-    isDarkMode 
+    isDarkMode,
+    currency
   }, ref) => {
     // Calculate cost per minute (factual calculation)
     const durationInMinutes = timeUnit === 'hours' 
@@ -138,7 +140,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
       if (parseFloat(duration) > 1 && timeUnit === 'hours') {
         const potentialSavings = hourlyRate * 0.5; // Savings from reducing by 30 minutes
         insights.push({
-          text: `Consider shortening to a 30-45 minute meeting (save ~$${formatMoney(potentialSavings)})`,
+          text: `Consider shortening to a 30-45 minute meeting (save ~${currency.symbol}${formatMoney(potentialSavings)})`,
           source: "Research shows that shorter, focused meetings improve engagement"
         });
       }
@@ -150,7 +152,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
         const potentialSavings = sortedCosts.slice(0, participants.length - 5).reduce((sum, cost) => sum + cost, 0);
         
         insights.push({
-          text: `Limit attendance to essential decision-makers (save up to $${formatMoney(potentialSavings)})`,
+          text: `Limit attendance to essential decision-makers (save up to ${currency.symbol}${formatMoney(potentialSavings)})`,
           source: "Smaller groups reach decisions up to 3x faster"
         });
       }
@@ -227,7 +229,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
             color: appleColors.textPrimary,
             display: 'inline-block'
           }}>
-            {totalCost !== null ? `Team Investment: $${formatMoney(totalCost)}` : fallbackTitle}
+            {totalCost !== null ? `Team Investment: ${currency.symbol}${formatMoney(totalCost)}` : fallbackTitle}
           </h1>
           
           {/* Static Subtitle */}
@@ -288,7 +290,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                 color: appleColors.textPrimary,
                 marginBottom: '6px'
               }}>
-                ${displayTotalCost !== null ? formatMoney(displayTotalCost) : "0"}
+                {currency.symbol}{displayTotalCost !== null ? formatMoney(displayTotalCost) : "0"}
               </div>
               <div style={{ 
                 fontSize: '13px', 
@@ -338,14 +340,14 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                 color: appleColors.textPrimary,
                 marginBottom: '6px'
               }}>
-                ${formatMoney(costPerMinute)}
+                {currency.symbol}{formatMoney(costPerMinute)}
               </div>
               <div style={{ 
                 fontSize: '13px', 
                 color: appleColors.textTertiary,
                 fontWeight: 500
               }}>
-                per minute (${formatMoney(costPerHour)} per hour)
+                per minute ({currency.symbol}{formatMoney(costPerHour)} per hour)
               </div>
             </div>
             
@@ -463,6 +465,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                     totalCost={totalCost}
                     calculateIndividualCost={calculateIndividualCost}
                     isDarkMode={isDarkMode}
+                    currency={currency}
                   />
                 </div>
               </div>
@@ -478,11 +481,11 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                 borderRadius: '8px',
                 border: isDarkMode ? 'none' : `1px solid ${appleColors.border}`
               }}>
-                <div>Per person avg: <span style={{ fontWeight: 600 }}>${displayTotalCost !== null && participants.length > 0 
+                <div>Per person avg: <span style={{ fontWeight: 600 }}>{currency.symbol}{displayTotalCost !== null && participants.length > 0 
                   ? formatMoney(displayTotalCost / participants.length) 
                   : "0"}</span></div>
                 
-                <div>Total: <span style={{ fontWeight: 600 }}>${displayTotalCost !== null ? formatMoney(displayTotalCost) : "0"}</span></div>
+                <div>Total: <span style={{ fontWeight: 600 }}>{currency.symbol}{displayTotalCost !== null ? formatMoney(displayTotalCost) : "0"}</span></div>
               </div>
             </div>
             
@@ -541,12 +544,12 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                           {participant.name || `Person ${index + 1}`}
                         </td>
                         <td style={{ padding: '12px 20px' }}>
-                          ${useExactRates 
+                          {currency.symbol}{useExactRates 
                             ? parseFloat(participant.hourlyRate || "0").toFixed(2) 
                             : getSalaryRangeMidpoint(participant.salaryRange).toFixed(2)}/hr
                         </td>
                         <td style={{ padding: '12px 20px', fontWeight: 600, textAlign: 'right' }}>
-                          ${formatMoney(cost)}
+                          {currency.symbol}{formatMoney(cost)}
                         </td>
                       </tr>
                     );
@@ -600,7 +603,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                     fontSize: '14px',
                     color: appleColors.textSecondary
                   }}>
-                    This meeting represents <span style={{ fontWeight: 600 }}>${displayTotalCost !== null ? formatMoney(displayTotalCost) : "0"}</span> in team investment.
+                    This meeting represents <span style={{ fontWeight: 600 }}>{currency.symbol}{displayTotalCost !== null ? formatMoney(displayTotalCost) : "0"}</span> in team investment.
                   </p>
                 </div>
                 
@@ -687,21 +690,12 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                       flexShrink: 0,
                       fontSize: '14px'
                     }}>•</div>
-                    <div>
-                      <div style={{ 
-                        fontWeight: 600, 
-                        marginBottom: '4px',
-                        color: appleColors.textPrimary
-                      }}>
-                        {insight.text}
-                      </div>
-                      <div style={{ 
-                        color: appleColors.textSecondary,
-                        fontSize: '13px',
-                        lineHeight: '1.5'
-                      }}>
-                        {insight.source}
-                      </div>
+                    <div style={{
+                      fontSize: '13px',
+                      lineHeight: 1.5,
+                      color: appleColors.textPrimary
+                    }}>
+                      {insight.text}
                     </div>
                   </div>
                 ))}

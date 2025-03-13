@@ -6,11 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { X, Plus, User, LockKeyhole, Unlock, Users, Camera, Check, Clock, Edit3, BarChart4 } from "lucide-react";
+import { X, Plus, User, LockKeyhole, Unlock, Users, Camera, Check, Clock, Edit3, BarChart4, Globe } from "lucide-react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import html2canvas from "html2canvas-pro";
 import ExportTemplate from "@/components/ExportTemplate";
-import { Participant } from "@/types/types";
+import { Participant, COMMON_CURRENCIES, CurrencyInfo } from "@/types/types";
 
 // Salary range options
 const SALARY_RANGES = [
@@ -95,6 +95,9 @@ export default function Home() {
 
   // Add state for tracking scroll and overlap
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
+
+  // Add currency state
+  const [currency, setCurrency] = useState<CurrencyInfo>(COMMON_CURRENCIES[0]);
 
   // Helper function to validate inputs
   const isValidInput = (value: string): boolean => {
@@ -396,50 +399,53 @@ export default function Home() {
     return (range.min + range.max) / 2;
   };
 
-  // Get a display value for a participant's input rate
+  // Format money for display with appropriate precision and currency
+  const formatMoney = (amount: number): string => {
+    // Format with the selected currency using Intl.NumberFormat
+    const formatter = new Intl.NumberFormat('en-US', {
+      style: 'decimal',
+      minimumFractionDigits: amount < 100 || amount % 1 > 0.01 ? 2 : 0,
+      maximumFractionDigits: amount < 100 || amount % 1 > 0.01 ? 2 : 0,
+    });
+    
+    return formatter.format(amount);
+  };
+
+  // Get participant rate display with currency
   const getParticipantRateDisplay = (participant: Participant) => {
     if (useExactRates) {
       if (!participant.hourlyRate) return "Not set";
       
       if (participant.salaryType === "hourly") {
-        return `$${participant.hourlyRate}/hr`;
+        return `${currency.symbol}${participant.hourlyRate}/hr`;
       } else if (participant.salaryType === "monthly") {
-        return `$${participant.hourlyRate}/mo`;
+        return `${currency.symbol}${participant.hourlyRate}/mo`;
       } else {
-        return `$${participant.hourlyRate}/yr`;
+        return `${currency.symbol}${participant.hourlyRate}/yr`;
       }
     } else {
       const range = SALARY_RANGES.find(r => r.value === participant.salaryRange);
-      return range ? range.label : "Not set";
+      return range ? range.label.replace('$', currency.symbol) : "Not set";
     }
   };
 
-  // Convert a rate to hourly for display
+  // Convert a rate to hourly for display with currency
   const convertToHourlyForDisplay = (participant: Participant): string => {
     if (!participant.hourlyRate || participant.hourlyRate === "0" || participant.hourlyRate === "") return "--";
     
     const rate = parseFloat(participant.hourlyRate);
     
     if (participant.salaryType === "hourly") {
-      return `$${rate.toFixed(2)}/hr`;
+      return `${currency.symbol}${rate.toFixed(2)}/hr`;
     } else if (participant.salaryType === "monthly") {
       const hourly = rate / 173.33;
-      return `$${hourly.toFixed(2)}/hr`;
+      return `${currency.symbol}${hourly.toFixed(2)}/hr`;
     } else if (participant.salaryType === "annual") {
       const hourly = rate / 2080;
-      return `$${hourly.toFixed(2)}/hr`;
+      return `${currency.symbol}${hourly.toFixed(2)}/hr`;
     }
     
     return "--";
-  };
-  
-  // Format money for display with appropriate precision
-  const formatMoney = (amount: number): string => {
-    // Show cents only if the amount is small or has significant cents
-    if (amount < 100 || amount % 1 > 0.01) {
-      return amount.toFixed(2);
-    }
-    return amount.toFixed(0);
   };
 
   // Toggle showing participant details
@@ -517,6 +523,7 @@ export default function Home() {
           formatMoney={formatMoney}
           meetingName={meetingName}
           isDarkMode={isDarkMode}
+          currency={currency}
         />
       </div>
     
@@ -527,6 +534,29 @@ export default function Home() {
             <CardDescription className="text-center mb-2 text-sm sm:text-base opacity-80">
               Calculate the true cost of your meetings
             </CardDescription>
+          </div>
+          
+          {/* Currency selection */}
+          <div className="flex justify-center mt-2">
+            <Select
+              value={currency.code}
+              onValueChange={(value) => {
+                const newCurrency = COMMON_CURRENCIES.find(c => c.code === value);
+                if (newCurrency) setCurrency(newCurrency);
+              }}
+            >
+              <SelectTrigger className="w-auto h-8 px-3 rounded-full text-xs flex items-center gap-1">
+                <Globe className="h-3 w-3 mr-1" />
+                <SelectValue placeholder="Currency" />
+              </SelectTrigger>
+              <SelectContent>
+                {COMMON_CURRENCIES.map((curr) => (
+                  <SelectItem key={curr.code} value={curr.code}>
+                    {curr.symbol} {curr.name} ({curr.code})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </CardHeader>
         
@@ -954,7 +984,7 @@ export default function Home() {
                 <div className="p-2 sm:p-3 rounded-xl text-center sm:text-left">
                   <h3 className="font-medium text-base sm:text-lg mb-1">Total Meeting Cost</h3>
                   <p className="text-3xl sm:text-4xl font-bold tracking-tight text-primary">
-                    ${totalCost !== null ? formatMoney(totalCost) : "0"}
+                    {currency.symbol}{totalCost !== null ? formatMoney(totalCost) : "0"}
                   </p>
                   <p className="text-xs sm:text-sm text-muted-foreground mt-1">
                     {participants.length} {participants.length === 1 ? 'person' : 'people'} × {duration || '1'} {timeUnit}
@@ -964,7 +994,7 @@ export default function Home() {
                 <div className="text-center sm:text-right p-2 sm:p-3 rounded-xl">
                   <h3 className="font-medium text-base sm:text-lg mb-1">Per Person Average</h3>
                   <p className="text-2xl sm:text-3xl font-semibold tracking-tight">
-                    ${totalCost !== null && participants.length > 0 
+                    {currency.symbol}{totalCost !== null && participants.length > 0 
                       ? formatMoney(totalCost / participants.length) 
                       : "0"}
                   </p>
@@ -1060,7 +1090,7 @@ export default function Home() {
                               )})
                             </span>
                           </span>
-                          <span className="font-bold">${formatMoney(individualCost)}</span>
+                          <span className="font-bold">{currency.symbol}{formatMoney(individualCost)}</span>
                         </div>
                       );
                     })}
@@ -1068,7 +1098,7 @@ export default function Home() {
                   
                   {participants.length > 2 && (
                     <p className="text-xs sm:text-sm text-muted-foreground mt-4 p-3 rounded text-center bg-background/40">
-                      That&apos;s ${formatMoney(totalCost / 60)} per minute for this group
+                      That&apos;s {currency.symbol}{formatMoney(totalCost / 60)} per minute for this group
                     </p>
                   )}
                 </div>
