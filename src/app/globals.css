@@ -21,12 +21,27 @@
   .theme-toggle-container {
     @apply fixed z-50 transition-all duration-200 ease-in-out
     rounded-full p-0 w-12 h-12 flex items-center justify-center
-    hover:scale-105;
+    hover:scale-105 overflow-hidden;
   }
   
   .frosted-glass {
-    @apply bg-background bg-opacity-60 backdrop-blur-lg shadow-lg 
-    border border-background border-opacity-20 dark:border-foreground dark:border-opacity-10;
+    @apply bg-background bg-opacity-40 backdrop-blur-md shadow-sm
+    border-0 dark:bg-opacity-30 dark:shadow-md;
+  }
+
+  /* Add subtle glow in dark mode */
+  .dark .theme-toggle-container {
+    @apply shadow-[0_0_15px_rgba(255,255,255,0.07)];
+  }
+  
+  /* Export button with frosted glass effect */
+  .export-button-glass {
+    @apply bg-primary/75 hover:bg-primary/90 backdrop-blur-md
+    text-primary-foreground shadow-md 
+    border border-primary/20 dark:border-primary/10
+    transition-all duration-200 ease-in-out
+    hover:shadow-lg hover:scale-[1.02] active:scale-[0.98]
+    dark:shadow-[0_0_10px_rgba(255,255,255,0.1)];
   }
 }
 

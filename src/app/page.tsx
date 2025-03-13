@@ -1049,13 +1049,13 @@ export default function Home() {
                 <Button
                   type="button"
                   size="default"
-                  variant="outline"
-                  className="h-10 gap-1 px-4 w-full sm:w-auto"
+                  variant="default"
+                  className="export-button-glass h-10 gap-1 px-6 py-2 w-full sm:w-auto font-medium"
                   onClick={() => exportAsImage('png')}
                   disabled={!!exportStatus}
                 >
                   {exportStatus ? exportStatus : <>
-                    <Camera className="h-4 w-4 mr-2" /> Export as Image
+                    <Camera className="h-5 w-5 mr-2" /> Export as Image
                   </>}
                 </Button>
               </div>
