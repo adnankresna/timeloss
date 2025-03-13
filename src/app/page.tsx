@@ -105,10 +105,10 @@ export default function Home() {
   };
 
   // Convert salary range to hourly rate
-  const getSalaryRangeMidpoint = (rangeValue: string): number => {
+  const getSalaryRangeMidpoint = useCallback((rangeValue: string): number => {
     const range = SALARY_RANGES.find(r => r.value === rangeValue);
     return range ? (range.min + range.max) / 2 : 0;
-  };
+  }, []);
 
   // Helper function to calculate meeting cost
   const calculateCost = useCallback(() => {
@@ -812,7 +812,7 @@ export default function Home() {
                       onValueChange={(value: "hourly" | "monthly" | "annual") => {
                         // Apply this salary type to all participants
                         setParticipants(
-                          participants.map(p => ({ ...p, salaryType: value as any }))
+                          participants.map(p => ({ ...p, salaryType: value }))
                         );
                       }}
                     >
