@@ -91,6 +91,7 @@ export default function Home() {
   // State for bulk participant management
   const [customParticipantCount, setCustomParticipantCount] = useState<string>("");
   const [showParticipantDetails, setShowParticipantDetails] = useState<boolean>(true);
+  const [compactView, setCompactView] = useState<boolean>(true);
 
   // Add state for tracking scroll and overlap
   const [isScrolled, setIsScrolled] = useState<boolean>(false);
@@ -404,6 +405,11 @@ export default function Home() {
     setShowParticipantDetails(!showParticipantDetails);
   };
 
+  // Toggle compact view
+  const toggleCompactView = () => {
+    setCompactView(!compactView);
+  };
+
   // Clear calculation for person-hours
   const calculatePersonHours = (): string => {
     if (!duration || !isValidInput(duration) || !participants.length) return "0";
@@ -669,87 +675,148 @@ export default function Home() {
               </div>
               
               {/* Participant details */}
-              <div className="border-t border-border/30 pt-4">
-                <div className="flex items-center justify-between mb-3">
+              <div className="border-t border-border/30 pt-3">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                   <h3 className="font-medium">Participant Details</h3>
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={toggleParticipantDetails}
-                    className="flex items-center gap-1 rounded-full text-xs px-3 sm:px-4 py-1"
-                  >
-                    {showParticipantDetails ? "Hide Details" : "Show Details"}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={toggleCompactView}
+                      className="flex items-center gap-1 rounded-full text-xs px-3 py-1 h-7"
+                    >
+                      {compactView ? "Detailed View" : "Compact View"}
+                    </Button>
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={toggleParticipantDetails}
+                      className="flex items-center gap-1 rounded-full text-xs px-3 py-1 h-7"
+                    >
+                      {showParticipantDetails ? "Hide Details" : "Show Details"}
+                    </Button>
+                  </div>
                 </div>
                 
                 {showParticipantDetails && (
-                  <div className="mt-3 space-y-4">
+                  <div className="mt-2 space-y-2">
                     {participants.map((participant, index) => (
-                      <div key={participant.id} className="grid grid-cols-1 gap-3 items-start p-3 sm:p-4 rounded-xl bg-muted/5">
-                        <div className="w-full">
-                          <Label htmlFor={`name-${participant.id}`} className="text-sm mb-1 block">Name (Optional)</Label>
-                          <div className="flex items-center">
-                            <User className="h-4 w-4 mr-2 text-muted-foreground" />
-                            <Input
-                              id={`name-${participant.id}`}
-                              value={participant.name}
-                              onChange={(e) => updateParticipant(participant.id, "name", e.target.value)}
-                              placeholder={`Person ${index + 1}`}
-                              className="w-full rounded-lg"
-                            />
-                          </div>
-                        </div>
-                        
-                        <div className="w-full transition-all duration-200 ease-in-out">
-                          {useExactRates ? (
-                            <div className="animate-in fade-in duration-200">
-                              <Label htmlFor={`rate-${participant.id}`} className="text-sm mb-1 block">Hourly Rate (USD)</Label>
-                              <Input
-                                id={`rate-${participant.id}`}
-                                type="number"
-                                placeholder="e.g., 50"
-                                value={participant.hourlyRate}
-                                onChange={(e) => updateParticipant(participant.id, "hourlyRate", e.target.value)}
-                                min="1"
-                                step="1"
-                                className="w-full rounded-lg"
-                              />
+                      <div key={participant.id} className="bg-muted/5 rounded-lg relative">
+                        {compactView ? (
+                          // Compact View - Ultra space efficient
+                          <div className="flex items-center justify-between gap-1 p-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                              <span className="text-sm truncate">
+                                {participant.name || `Person ${index + 1}`}
+                              </span>
                             </div>
-                          ) : (
-                            <div className="animate-in fade-in duration-200">
-                              <Label htmlFor={`range-${participant.id}`} className="text-sm mb-1 block">Salary Range</Label>
-                              <Select
-                                value={participant.salaryRange}
-                                onValueChange={(value) => updateParticipant(participant.id, "salaryRange", value)}
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium">
+                                {useExactRates 
+                                  ? (participant.hourlyRate ? `$${participant.hourlyRate}/hr` : '--') 
+                                  : (SALARY_RANGES.find(r => r.value === participant.salaryRange)?.label || '--')}
+                              </span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="text-muted-foreground hover:text-red-500 h-7 w-7 rounded-full p-0 flex items-center justify-center shrink-0"
+                                onClick={() => removeParticipant(participant.id)}
+                                disabled={participants.length === 1}
+                                aria-label="Remove participant"
                               >
-                                <SelectTrigger id={`range-${participant.id}`} className="w-full rounded-lg">
-                                  <SelectValue placeholder="Select range" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {SALARY_RANGES.map((range) => (
-                                    <SelectItem key={range.value} value={range.value}>
-                                      {range.label}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                                <X className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="text-muted-foreground hover:text-primary h-7 w-7 rounded-full p-0 flex items-center justify-center shrink-0"
+                                onClick={() => {
+                                  // Open this participant for editing in full view
+                                  setCompactView(false);
+                                }}
+                                aria-label="Edit participant"
+                              >
+                                <Edit3 className="h-3.5 w-3.5" />
+                              </Button>
                             </div>
-                          )}
-                        </div>
-                        
-                        <div className="flex justify-end w-full">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="text-muted-foreground hover:text-red-500 h-9 w-9 rounded-full"
-                            onClick={() => removeParticipant(participant.id)}
-                            disabled={participants.length === 1}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
+                          </div>
+                        ) : (
+                          // Regular View - More detailed editing
+                          <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2 p-2">
+                            {/* Name field - Full width on mobile, first column on desktop */}
+                            <div className="w-full">
+                              <Label htmlFor={`name-${participant.id}`} className="text-xs mb-1 block">Name (Optional)</Label>
+                              <div className="flex items-center h-9">
+                                <User className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+                                <Input
+                                  id={`name-${participant.id}`}
+                                  value={participant.name}
+                                  onChange={(e) => updateParticipant(participant.id, "name", e.target.value)}
+                                  placeholder={`Person ${index + 1}`}
+                                  className="w-full rounded-md h-8 text-sm"
+                                />
+                              </div>
+                            </div>
+                            
+                            {/* Rate field - Full width on mobile, second column on desktop */}
+                            <div className="w-full">
+                              {useExactRates ? (
+                                <div>
+                                  <Label htmlFor={`rate-${participant.id}`} className="text-xs mb-1 block">Hourly Rate ($)</Label>
+                                  <Input
+                                    id={`rate-${participant.id}`}
+                                    type="number"
+                                    placeholder="e.g., 50"
+                                    value={participant.hourlyRate}
+                                    onChange={(e) => updateParticipant(participant.id, "hourlyRate", e.target.value)}
+                                    min="1"
+                                    step="1"
+                                    className="w-full rounded-md h-8 text-sm"
+                                  />
+                                </div>
+                              ) : (
+                                <div>
+                                  <Label htmlFor={`range-${participant.id}`} className="text-xs mb-1 block">Salary Range</Label>
+                                  <Select
+                                    value={participant.salaryRange}
+                                    onValueChange={(value) => updateParticipant(participant.id, "salaryRange", value)}
+                                  >
+                                    <SelectTrigger id={`range-${participant.id}`} className="w-full rounded-md h-8 text-sm">
+                                      <SelectValue placeholder="Select range" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {SALARY_RANGES.map((range) => (
+                                        <SelectItem key={range.value} value={range.value}>
+                                          {range.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              )}
+                            </div>
+                            
+                            {/* Delete button - Aligned right on all screens */}
+                            <div className="flex items-center justify-end sm:justify-center h-8 mt-auto">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="text-muted-foreground hover:text-red-500 h-8 w-8 rounded-full p-0 flex items-center justify-center"
+                                onClick={() => removeParticipant(participant.id)}
+                                disabled={participants.length === 1}
+                                aria-label="Remove participant"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
