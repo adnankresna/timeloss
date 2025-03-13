@@ -605,14 +605,6 @@ export default function Home() {
                 <p className="text-xs text-muted-foreground text-center transition-opacity duration-200 ease-in-out">
                   {!useExactRates ? "Privacy mode uses salary ranges instead of exact figures" : "Exact rates mode uses precise hourly costs"}
                 </p>
-                
-                {useExactRates && (
-                  <p className="text-xs text-muted-foreground text-center italic px-4">
-                    Enter your hourly, monthly, or annual salary. 
-                    Monthly is converted to hourly at 173.33 hours/month (40hr weeks), 
-                    annual at 2080 hours/year.
-                  </p>
-                )}
               </div>
               
               {/* Team size quick selection */}
@@ -749,6 +741,14 @@ export default function Home() {
                     </p>
                   </div>
                 </div>
+                
+                {useExactRates && (
+                  <p className="text-xs text-muted-foreground text-center italic mt-3">
+                    Enter your hourly, monthly, or annual salary. 
+                    Monthly is converted to hourly at 173.33 hours/month (40hr weeks), 
+                    annual at 2080 hours/year.
+                  </p>
+                )}
               </div>
               
               {/* Participant details */}
