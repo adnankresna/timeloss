@@ -76,7 +76,7 @@ export default function Home() {
 
   // State for participants with individual hourly rates
   const [participants, setParticipants] = useState<Participant[]>([
-    { id: "1", name: "", hourlyRate: "", salaryRange: "" }
+    { id: "1", name: "", hourlyRate: "", salaryRange: "", salaryType: "hourly" }
   ]);
   
   // State for meeting duration - default to 1 hour
@@ -183,6 +183,7 @@ export default function Home() {
     const lastParticipant = participants[participants.length - 1];
     const newHourlyRate = lastParticipant.hourlyRate || "";
     const newSalaryRange = lastParticipant.salaryRange || "";
+    const newSalaryType = lastParticipant.salaryType || "hourly";
     
     setParticipants([
       ...participants, 
@@ -190,7 +191,8 @@ export default function Home() {
         id: Date.now().toString(), 
         name: "", 
         hourlyRate: newHourlyRate, 
-        salaryRange: newSalaryRange 
+        salaryRange: newSalaryRange,
+        salaryType: newSalaryType
       }
     ]);
   };
@@ -200,6 +202,7 @@ export default function Home() {
     // Get rate from first participant to apply to all new participants
     const existingRate = participants[0]?.hourlyRate || "";
     const existingSalaryRange = participants[0]?.salaryRange || "";
+    const existingSalaryType = participants[0]?.salaryType || "hourly";
     
     // Preserve existing participants up to the count
     const existingToKeep = participants.slice(0, count);
@@ -211,7 +214,8 @@ export default function Home() {
           id: (Date.now() + index).toString(),
           name: "",
           hourlyRate: existingRate,
-          salaryRange: existingSalaryRange
+          salaryRange: existingSalaryRange,
+          salaryType: existingSalaryType
         }))
       : [];
     
@@ -361,17 +365,28 @@ export default function Home() {
     if (!duration) return 0;
     
     const timeDuration = parseFloat(duration);
-    let rate = 0;
+    let hourlyRate = 0;
     
     if (useExactRates) {
-      rate = parseFloat(participant.hourlyRate || "0");
+      const inputRate = parseFloat(participant.hourlyRate || "0");
+      
+      // Convert to hourly rate based on salary type
+      if (participant.salaryType === "hourly") {
+        hourlyRate = inputRate;
+      } else if (participant.salaryType === "monthly") {
+        // Assume 173.33 working hours per month (40 hours * 52 weeks / 12 months)
+        hourlyRate = inputRate / 173.33;
+      } else if (participant.salaryType === "annual") {
+        // Assume 2080 working hours per year (40 hours * 52 weeks)
+        hourlyRate = inputRate / 2080;
+      }
     } else {
-      rate = getSalaryRangeMidpoint(participant.salaryRange);
+      hourlyRate = getSalaryRangeMidpoint(participant.salaryRange);
     }
     
     return timeUnit === "hours" 
-      ? rate * timeDuration 
-      : rate * (timeDuration / 60);
+      ? hourlyRate * timeDuration 
+      : hourlyRate * (timeDuration / 60);
   };
 
   // Get the midpoint of a salary range for calculation
@@ -381,14 +396,41 @@ export default function Home() {
     return (range.min + range.max) / 2;
   };
 
-  // Generate a display label for a participant's rate
+  // Get a display value for a participant's input rate
   const getParticipantRateDisplay = (participant: Participant) => {
     if (useExactRates) {
-      return `$${participant.hourlyRate}/hr`;
+      if (!participant.hourlyRate) return "Not set";
+      
+      if (participant.salaryType === "hourly") {
+        return `$${participant.hourlyRate}/hr`;
+      } else if (participant.salaryType === "monthly") {
+        return `$${participant.hourlyRate}/mo`;
+      } else {
+        return `$${participant.hourlyRate}/yr`;
+      }
     } else {
       const range = SALARY_RANGES.find(r => r.value === participant.salaryRange);
       return range ? range.label : "Not set";
     }
+  };
+
+  // Convert a rate to hourly for display
+  const convertToHourlyForDisplay = (participant: Participant): string => {
+    if (!participant.hourlyRate || participant.hourlyRate === "0" || participant.hourlyRate === "") return "--";
+    
+    const rate = parseFloat(participant.hourlyRate);
+    
+    if (participant.salaryType === "hourly") {
+      return `$${rate.toFixed(2)}/hr`;
+    } else if (participant.salaryType === "monthly") {
+      const hourly = rate / 173.33;
+      return `$${hourly.toFixed(2)}/hr`;
+    } else if (participant.salaryType === "annual") {
+      const hourly = rate / 2080;
+      return `$${hourly.toFixed(2)}/hr`;
+    }
+    
+    return "--";
   };
   
   // Format money for display with appropriate precision
@@ -563,6 +605,14 @@ export default function Home() {
                 <p className="text-xs text-muted-foreground text-center transition-opacity duration-200 ease-in-out">
                   {!useExactRates ? "Privacy mode uses salary ranges instead of exact figures" : "Exact rates mode uses precise hourly costs"}
                 </p>
+                
+                {useExactRates && (
+                  <p className="text-xs text-muted-foreground text-center italic px-4">
+                    Enter your hourly, monthly, or annual salary. 
+                    Monthly is converted to hourly at 173.33 hours/month (40hr weeks), 
+                    annual at 2080 hours/year.
+                  </p>
+                )}
               </div>
               
               {/* Team size quick selection */}
@@ -627,24 +677,51 @@ export default function Home() {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
                   <div className="flex items-center w-full sm:w-auto">
                     <Label className="whitespace-nowrap flex items-center gap-1 text-sm font-medium">
-                      <span>{useExactRates ? "Everyone earns:" : "Everyone's in range:"}</span>
+                      <span>{useExactRates ? "Everyone's salary:" : "Everyone's in range:"}</span>
                     </Label>
                   </div>
                   
                   <div className="w-full sm:flex-1 transition-all duration-200 ease-in-out">
                     {useExactRates ? (
-                      <div className="flex items-center animate-in fade-in duration-200 w-full">
-                        <Input
-                          type="number"
-                          placeholder="e.g., 50"
-                          className="w-full sm:max-w-40 rounded-lg"
-                          min="1"
-                          step="1"
-                          onChange={(e) => {
-                            if (e.target.value) applyRateToAll(e.target.value);
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 animate-in fade-in duration-200 w-full">
+                        <Select
+                          value={participants[0]?.salaryType || "hourly"}
+                          onValueChange={(value: "hourly" | "monthly" | "annual") => {
+                            // Apply this salary type to all participants
+                            setParticipants(
+                              participants.map(p => ({ ...p, salaryType: value }))
+                            );
                           }}
-                        />
-                        <span className="ml-2 text-sm font-medium">$/hr</span>
+                        >
+                          <SelectTrigger className="w-full sm:w-28 rounded-lg">
+                            <SelectValue placeholder="Salary Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="hourly">Hourly</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                            <SelectItem value="annual">Annual</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        
+                        <div className="flex items-center w-full">
+                          <Input
+                            type="number"
+                            placeholder={participants[0]?.salaryType === "hourly" ? "e.g., 50" : 
+                                       participants[0]?.salaryType === "monthly" ? "e.g., 5000" : 
+                                       "e.g., 60000"}
+                            className="w-full sm:max-w-40 rounded-lg"
+                            min="1"
+                            step="1"
+                            onChange={(e) => {
+                              if (e.target.value) applyRateToAll(e.target.value);
+                            }}
+                          />
+                          <span className="ml-2 text-sm font-medium whitespace-nowrap">
+                            {participants[0]?.salaryType === "hourly" ? "$/hr" : 
+                             participants[0]?.salaryType === "monthly" ? "$/mo" : 
+                             "$/yr"}
+                          </span>
+                        </div>
                       </div>
                     ) : (
                       <div className="animate-in fade-in duration-200 w-full">
@@ -714,11 +791,18 @@ export default function Home() {
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-sm font-medium">
-                                {useExactRates 
-                                  ? (participant.hourlyRate ? `$${participant.hourlyRate}/hr` : '--') 
-                                  : (SALARY_RANGES.find(r => r.value === participant.salaryRange)?.label || '--')}
-                              </span>
+                              <div className="text-right">
+                                <span className="text-sm font-medium block">
+                                  {useExactRates 
+                                    ? (participant.hourlyRate ? getParticipantRateDisplay(participant) : '--') 
+                                    : (SALARY_RANGES.find(r => r.value === participant.salaryRange)?.label || '--')}
+                                </span>
+                                {useExactRates && participant.salaryType !== "hourly" && participant.hourlyRate && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {convertToHourlyForDisplay(participant)}
+                                  </span>
+                                )}
+                              </div>
                               <Button
                                 type="button"
                                 variant="ghost"
@@ -767,17 +851,47 @@ export default function Home() {
                             <div className="w-full">
                               {useExactRates ? (
                                 <div>
-                                  <Label htmlFor={`rate-${participant.id}`} className="text-xs mb-1 block">Hourly Rate ($)</Label>
-                                  <Input
-                                    id={`rate-${participant.id}`}
-                                    type="number"
-                                    placeholder="e.g., 50"
-                                    value={participant.hourlyRate}
-                                    onChange={(e) => updateParticipant(participant.id, "hourlyRate", e.target.value)}
-                                    min="1"
-                                    step="1"
-                                    className="w-full rounded-md h-8 text-sm"
-                                  />
+                                  <div className="flex items-center justify-between">
+                                    <Label htmlFor={`rate-${participant.id}`} className="text-xs mb-1 block">
+                                      {participant.salaryType === "hourly" ? "Hourly Rate ($)" :
+                                       participant.salaryType === "monthly" ? "Monthly Salary ($)" : 
+                                       "Annual Salary ($)"}
+                                    </Label>
+                                    <Select
+                                      value={participant.salaryType}
+                                      onValueChange={(value: "hourly" | "monthly" | "annual") => 
+                                        updateParticipant(participant.id, "salaryType", value)
+                                      }
+                                    >
+                                      <SelectTrigger className="w-24 h-6 text-xs rounded-md mb-1">
+                                        <SelectValue placeholder="Salary Type" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="hourly">Hourly</SelectItem>
+                                        <SelectItem value="monthly">Monthly</SelectItem>
+                                        <SelectItem value="annual">Annual</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div className="flex items-center">
+                                    <Input
+                                      id={`rate-${participant.id}`}
+                                      type="number"
+                                      placeholder={participant.salaryType === "hourly" ? "e.g., 50" : 
+                                                  participant.salaryType === "monthly" ? "e.g., 5000" : 
+                                                  "e.g., 60000"}
+                                      value={participant.hourlyRate}
+                                      onChange={(e) => updateParticipant(participant.id, "hourlyRate", e.target.value)}
+                                      min="1"
+                                      step="1"
+                                      className="w-full rounded-md h-8 text-sm"
+                                    />
+                                    {participant.hourlyRate && (
+                                      <div className="ml-2 text-xs text-muted-foreground whitespace-nowrap">
+                                        {convertToHourlyForDisplay(participant)}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               ) : (
                                 <div>
@@ -935,7 +1049,17 @@ export default function Home() {
                       
                       return (
                         <div key={participant.id} className="flex justify-between text-sm p-3 rounded-lg bg-background/40">
-                          <span className="font-medium">{participant.name || `Person ${participants.indexOf(participant) + 1}`} ({rateDisplay})</span>
+                          <span className="font-medium">
+                            {participant.name || `Person ${participants.indexOf(participant) + 1}`} 
+                            <span>
+                              ({rateDisplay}
+                              {useExactRates && participant.salaryType !== "hourly" && participant.hourlyRate && (
+                                <span className="text-xs text-muted-foreground ml-1">
+                                  ~{convertToHourlyForDisplay(participant)}
+                                </span>
+                              )})
+                            </span>
+                          </span>
                           <span className="font-bold">${formatMoney(individualCost)}</span>
                         </div>
                       );

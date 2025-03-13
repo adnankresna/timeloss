@@ -4,4 +4,5 @@ export interface Participant {
   name: string;
   hourlyRate: string;
   salaryRange: string;
+  salaryType: "hourly" | "monthly" | "annual";
 } 
