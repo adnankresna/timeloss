@@ -411,6 +411,14 @@ export default function Home() {
     return formatter.format(amount);
   };
 
+  // Format a number with thousand separators for placeholder text
+  const formatPlaceholder = (value: number): string => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'decimal',
+      maximumFractionDigits: 0
+    }).format(value);
+  };
+
   // Get participant rate display with currency
   const getParticipantRateDisplay = (participant: Participant) => {
     if (useExactRates) {
@@ -729,8 +737,8 @@ export default function Home() {
                           <Input
                             type="number"
                             placeholder={participants[0]?.salaryType === "hourly" ? "e.g., 50" : 
-                                       participants[0]?.salaryType === "monthly" ? "e.g., 5000" : 
-                                       "e.g., 60000"}
+                                       participants[0]?.salaryType === "monthly" ? `e.g., ${formatPlaceholder(5000)}` : 
+                                       `e.g., ${formatPlaceholder(60000)}`}
                             className="w-full sm:max-w-40 rounded-lg"
                             min="1"
                             step="1"
@@ -739,9 +747,9 @@ export default function Home() {
                             }}
                           />
                           <span className="ml-2 text-sm font-medium whitespace-nowrap">
-                            {participants[0]?.salaryType === "hourly" ? "$/hr" : 
-                             participants[0]?.salaryType === "monthly" ? "$/mo" : 
-                             "$/yr"}
+                            {participants[0]?.salaryType === "hourly" ? `${currency.symbol}/hr` : 
+                             participants[0]?.salaryType === "monthly" ? `${currency.symbol}/mo` : 
+                             `${currency.symbol}/yr`}
                           </span>
                         </div>
                       </div>
@@ -756,7 +764,7 @@ export default function Home() {
                           <SelectContent>
                             {SALARY_RANGES.map((range) => (
                               <SelectItem key={range.value} value={range.value}>
-                                {range.label}
+                                {range.label.replace('$', currency.symbol)}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -908,8 +916,8 @@ export default function Home() {
                                       id={`rate-${participant.id}`}
                                       type="number"
                                       placeholder={participant.salaryType === "hourly" ? "e.g., 50" : 
-                                                  participant.salaryType === "monthly" ? "e.g., 5000" : 
-                                                  "e.g., 60000"}
+                                                  participant.salaryType === "monthly" ? `e.g., ${formatPlaceholder(5000)}` : 
+                                                  `e.g., ${formatPlaceholder(60000)}`}
                                       value={participant.hourlyRate}
                                       onChange={(e) => updateParticipant(participant.id, "hourlyRate", e.target.value)}
                                       min="1"
@@ -936,7 +944,7 @@ export default function Home() {
                                     <SelectContent>
                                       {SALARY_RANGES.map((range) => (
                                         <SelectItem key={range.value} value={range.value}>
-                                          {range.label}
+                                          {range.label.replace('$', currency.symbol)}
                                         </SelectItem>
                                       ))}
                                     </SelectContent>
