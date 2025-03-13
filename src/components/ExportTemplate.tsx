@@ -542,9 +542,7 @@ const ExportTemplate = forwardRef<HTMLDivElement, ExportTemplateProps>(
                           {participant.name || `Person ${index + 1}`}
                         </td>
                         <td style={{ padding: '12px 20px' }}>
-                          {currency.symbol}{useExactRates 
-                            ? parseFloat(participant.hourlyRate || "0").toFixed(2) 
-                            : getSalaryRangeMidpoint(participant.salaryRange).toFixed(2)}/hr
+                          {currency.symbol}{formatMoney(individualCosts[index] / (timeUnit === 'hours' ? parseFloat(duration || '1') : parseFloat(duration || '1') / 60))}/hr
                         </td>
                         <td style={{ padding: '12px 20px', fontWeight: 600, textAlign: 'right' }}>
                           {currency.symbol}{formatMoney(cost)}
