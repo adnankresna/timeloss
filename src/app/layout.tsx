@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Major Financial Decision: $390 per Meeting",
+  title: "Timeloss",
   description: "Calculate the true cost of your meetings and make smarter financial decisions",
 };
 
