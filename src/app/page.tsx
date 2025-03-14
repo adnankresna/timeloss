@@ -820,24 +820,6 @@ export default function Home() {
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                   <h3 className="font-medium">Participant Details</h3>
                   <div className="flex items-center gap-2">
-                    <Select
-                      value={participants[0]?.salaryType || "hourly"}
-                      onValueChange={(value: "hourly" | "monthly" | "annual") => {
-                        // Apply this salary type to all participants
-                        setParticipants(
-                          participants.map(p => ({ ...p, salaryType: value }))
-                        );
-                      }}
-                    >
-                      <SelectTrigger className="w-28 h-7 text-xs rounded-full">
-                        <SelectValue placeholder="Type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="hourly">Hourly</SelectItem>
-                        <SelectItem value="monthly">Monthly</SelectItem>
-                        <SelectItem value="annual">Annual</SelectItem>
-                      </SelectContent>
-                    </Select>
                     <Button 
                       type="button" 
                       variant="outline" 
