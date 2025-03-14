@@ -91,20 +91,25 @@ export default function Home() {
     generateSalaryRanges(COMMON_CURRENCIES[0])
   );
   
+  // Reference to track the previous currency code
+  const prevCurrencyRef = useRef(currency.code);
+  
   // Update salary ranges when currency changes
   useEffect(() => {
-    const oldRanges = salaryRanges;
-    const newRanges = generateSalaryRanges(currency);
-    setSalaryRanges(newRanges);
-    
-    // Update participant salary ranges to equivalent ranges in new currency
-    if (!useExactRates) {
-      setParticipants(participants.map(p => ({
-        ...p,
-        salaryRange: p.salaryRange ? findClosestRange(p.salaryRange, oldRanges, newRanges) : ""
-      })));
+    // Only run the effect if the currency has actually changed
+    if (prevCurrencyRef.current !== currency.code) {
+      // Update salary ranges
+      const newRanges = generateSalaryRanges(currency);
+      setSalaryRanges(newRanges);
+      
+      // Remember the current currency code
+      prevCurrencyRef.current = currency.code;
     }
-  }, [currency, useExactRates, participants, salaryRanges]);
+  }, [currency]);
+  
+  // We don't need a separate effect for participants since the salaryRange values
+  // like "0-25" are consistent across currencies, and the display uses the current
+  // salaryRanges which automatically have updated labels with the current currency
 
   // Helper function to validate inputs
   const isValidInput = (value: string): boolean => {
