@@ -60,7 +60,7 @@ export function generateSalaryRanges(currency: CurrencyInfo) {
     const max = Math.round(range.max * multiplier);
     
     // Format the label with the correct currency symbol
-    let label = range.value === "500+" 
+    const label = range.value === "500+" 
       ? `${currency.symbol}${formatNumber(min, currency.code)}+/hr`
       : `${currency.symbol}${formatNumber(min, currency.code)}-${currency.symbol}${formatNumber(max, currency.code)}/hr`;
     
@@ -73,8 +73,16 @@ export function generateSalaryRanges(currency: CurrencyInfo) {
   });
 }
 
+// Define a proper type for the salary range
+interface SalaryRange {
+  min: number;
+  max: number;
+  value: string;
+  label: string;
+}
+
 // Find the closest equivalent range in the new currency
-export function findClosestRange(oldValue: string, oldRanges: any[], newRanges: any[]): string {
+export function findClosestRange(oldValue: string, oldRanges: SalaryRange[], newRanges: SalaryRange[]): string {
   if (!oldValue) return "";
   
   const oldRange = oldRanges.find(r => r.value === oldValue);

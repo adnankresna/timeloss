@@ -11,7 +11,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import html2canvas from "html2canvas-pro";
 import ExportTemplate from "@/components/ExportTemplate";
 import { Participant, COMMON_CURRENCIES, CurrencyInfo } from "@/types/types";
-import { generateSalaryRanges, findClosestRange } from "@/utils/currencyUtils";
+import { generateSalaryRanges } from "@/utils/currencyUtils";
 
 // Common team sizes for quick setting
 const COMMON_TEAM_SIZES = [
