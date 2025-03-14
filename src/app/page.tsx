@@ -11,19 +11,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import html2canvas from "html2canvas-pro";
 import ExportTemplate from "@/components/ExportTemplate";
 import { Participant, COMMON_CURRENCIES, CurrencyInfo } from "@/types/types";
-
-// Salary range options
-const SALARY_RANGES = [
-  { label: "$0-$25/hr", min: 0, max: 25, value: "0-25" },
-  { label: "$26-$50/hr", min: 26, max: 50, value: "26-50" },
-  { label: "$51-$75/hr", min: 51, max: 75, value: "51-75" },
-  { label: "$76-$100/hr", min: 76, max: 100, value: "76-100" },
-  { label: "$101-$150/hr", min: 101, max: 150, value: "101-150" },
-  { label: "$151-$200/hr", min: 151, max: 200, value: "151-200" },
-  { label: "$201-$300/hr", min: 201, max: 300, value: "201-300" },
-  { label: "$301-$500/hr", min: 301, max: 500, value: "301-500" },
-  { label: "$500+/hr", min: 500, max: 750, value: "500+" }, // Using an arbitrary max for calculation
-];
+import { generateSalaryRanges, findClosestRange } from "@/utils/currencyUtils";
 
 // Common team sizes for quick setting
 const COMMON_TEAM_SIZES = [
@@ -97,6 +85,26 @@ export default function Home() {
 
   // Add currency state
   const [currency, setCurrency] = useState<CurrencyInfo>(COMMON_CURRENCIES[0]);
+  
+  // Add state for dynamic salary ranges
+  const [salaryRanges, setSalaryRanges] = useState(() => 
+    generateSalaryRanges(COMMON_CURRENCIES[0])
+  );
+  
+  // Update salary ranges when currency changes
+  useEffect(() => {
+    const oldRanges = salaryRanges;
+    const newRanges = generateSalaryRanges(currency);
+    setSalaryRanges(newRanges);
+    
+    // Update participant salary ranges to equivalent ranges in new currency
+    if (!useExactRates) {
+      setParticipants(participants.map(p => ({
+        ...p,
+        salaryRange: p.salaryRange ? findClosestRange(p.salaryRange, oldRanges, newRanges) : ""
+      })));
+    }
+  }, [currency, useExactRates, participants, salaryRanges]);
 
   // Helper function to validate inputs
   const isValidInput = (value: string): boolean => {
@@ -106,9 +114,9 @@ export default function Home() {
 
   // Convert salary range to hourly rate
   const getSalaryRangeMidpoint = useCallback((rangeValue: string): number => {
-    const range = SALARY_RANGES.find(r => r.value === rangeValue);
+    const range = salaryRanges.find(r => r.value === rangeValue);
     return range ? (range.min + range.max) / 2 : 0;
-  }, []);
+  }, [salaryRanges]);
 
   // Helper function to calculate meeting cost
   const calculateCost = useCallback(() => {
@@ -445,8 +453,8 @@ export default function Home() {
         return `${currency.symbol}${rate}/yr`;
       }
     } else {
-      const range = SALARY_RANGES.find(r => r.value === participant.salaryRange);
-      return range ? range.label.replace('$', currency.symbol) : "Not set";
+      const range = salaryRanges.find(r => r.value === participant.salaryRange);
+      return range ? range.label : "Not set";
     }
   };
 
@@ -775,9 +783,9 @@ export default function Home() {
                             <SelectValue placeholder="Select range" />
                           </SelectTrigger>
                           <SelectContent>
-                            {SALARY_RANGES.map((range) => (
+                            {salaryRanges.map((range) => (
                               <SelectItem key={range.value} value={range.value}>
-                                {range.label.replace('$', currency.symbol)}
+                                {range.label}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -854,7 +862,7 @@ export default function Home() {
                               <span className="text-sm font-medium block">
                                 {useExactRates 
                                   ? (participant.hourlyRate ? getParticipantRateDisplay(participant) : '--') 
-                                  : (SALARY_RANGES.find(r => r.value === participant.salaryRange)?.label || '--').replace('$', currency.symbol)}
+                                  : (salaryRanges.find(r => r.value === participant.salaryRange)?.label || '--')}
                               </span>
                               {useExactRates && participant.hourlyRate && (
                                 <span className="text-xs text-muted-foreground">
@@ -977,9 +985,9 @@ export default function Home() {
                                     <SelectValue placeholder="Select range" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    {SALARY_RANGES.map((range) => (
+                                    {salaryRanges.map((range) => (
                                       <SelectItem key={range.value} value={range.value}>
-                                        {range.label.replace('$', currency.symbol)}
+                                        {range.label}
                                       </SelectItem>
                                     ))}
                                   </SelectContent>
