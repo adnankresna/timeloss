@@ -1,53 +1,39 @@
-# Timeloss
+# Meeting Cost Calculator
 
-## Overview
-
-Timeloss is a straightforward tool designed to help users calculate the total cost of a meeting. Users input the number of participants, their average hourly rate, and the meeting duration, and the website provides an instant cost estimate.
+A modern web application that helps teams visualize and understand the true cost of meetings. Built with Next.js and TypeScript.
 
 ## Features
 
-- **Simple Input Fields**:
-  - Number of Participants
-  - Average Hourly Rate (USD)
-  - Meeting Duration (hours or minutes)
-
-- **Real-Time Calculation**: Instantly updates the total cost as users input data
-
-- **Responsive Design**: Works on desktop and mobile devices
-
-- **Accessibility**: Built with accessible UI components
-
-## Technology Stack
-
-- **Framework**: [Next.js](https://nextjs.org/)
-- **Styling**: [Tailwind CSS](https://tailwindcss.com/)
-- **UI Components**: [Shadcn UI](https://ui.shadcn.com/)
+- Calculate meeting costs based on participants' salaries
+- Support for hourly, monthly, and annual salary inputs
+- Automatic conversion between salary types
+- Support for multiple currencies
+- Compact and detailed views for participant management
+- Real-time cost calculation
+- Modern, responsive UI
 
 ## Getting Started
 
-1. **Clone the repository**
-
-2. **Install dependencies**:
+1. Clone the repository
+2. Install dependencies:
    ```bash
    npm install
    ```
-
-3. **Run the development server**:
+3. Run the development server:
    ```bash
    npm run dev
    ```
+4. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-4. **Open [http://localhost:3000](http://localhost:3000)** with your browser to see the calculator
+## Tech Stack
 
-## How It Works
+- Next.js 14
+- TypeScript
+- Tailwind CSS
+- Shadcn UI
+- React Hooks
 
-The Meeting Calculator uses a simple formula to calculate the total cost of a meeting:
+## License
 
-- If duration is in hours:
-  `Total Cost = Number of Participants * Average Hourly Rate * Duration`
-
-- If duration is in minutes:
-  `Total Cost = Number of Participants * Average Hourly Rate * (Duration / 60)`
-
-All calculations are performed client-side using React state management, with no backend required.
+MIT
 
