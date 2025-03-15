@@ -12,7 +12,6 @@ import html2canvas from "html2canvas-pro";
 import ExportTemplate from "@/components/ExportTemplate";
 import { Participant, COMMON_CURRENCIES, CurrencyInfo } from "@/types/types";
 import { generateSalaryRanges } from "@/utils/currencyUtils";
-import { TextGenerateEffect } from "@/components/text-generate-effect";
 import { AnimateParticipants } from "@/components/animate-participants";
 
 export default function Home() {
