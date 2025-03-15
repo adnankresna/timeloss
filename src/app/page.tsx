@@ -12,6 +12,8 @@ import html2canvas from "html2canvas-pro";
 import ExportTemplate from "@/components/ExportTemplate";
 import { Participant, COMMON_CURRENCIES, CurrencyInfo } from "@/types/types";
 import { generateSalaryRanges } from "@/utils/currencyUtils";
+import { TextGenerateEffect } from "@/components/text-generate-effect";
+import { AnimateParticipants } from "@/components/animate-participants";
 
 export default function Home() {
   // Export status
@@ -85,6 +87,40 @@ export default function Home() {
   // Reference to track the previous currency code
   const prevCurrencyRef = useRef(currency.code);
   
+  // Add animation state
+  const [animateParticipants, setAnimateParticipants] = useState<boolean>(false);
+  
+  // Set a specific number of participants (replaces current list) - wrapped in useCallback
+  const setParticipantCount = useCallback((count: number) => {
+    // Enforce a maximum of 20 participants
+    const limitedCount = Math.min(count, 20);
+    
+    // Get rate from first participant to apply to all new participants
+    const existingRate = participants[0]?.hourlyRate || "";
+    const existingSalaryRange = participants[0]?.salaryRange || "";
+    const existingSalaryType = participants[0]?.salaryType || "hourly";
+    
+    // Preserve existing participants up to the count
+    const existingToKeep = participants.slice(0, limitedCount);
+    
+    // Create new participants if needed
+    const additionalNeeded = limitedCount - existingToKeep.length;
+    const newParticipants = additionalNeeded > 0 
+      ? Array.from({ length: additionalNeeded }, (_, index) => ({
+          id: (Date.now() + index).toString(),
+          name: "",
+          hourlyRate: existingRate,
+          salaryRange: existingSalaryRange,
+          salaryType: existingSalaryType
+        }))
+      : [];
+    
+    setParticipants([...existingToKeep, ...newParticipants]);
+    
+    // We don't need to trigger animation here as it's now handled in the useEffect 
+    // and input event handlers
+  }, [participants]);
+  
   // Update salary ranges when currency changes
   useEffect(() => {
     // Only run the effect if the currency has actually changed
@@ -97,6 +133,26 @@ export default function Home() {
       prevCurrencyRef.current = currency.code;
     }
   }, [currency]);
+  
+  // Auto-apply team size after a short delay when input changes
+  useEffect(() => {
+    if (!customParticipantCount) return;
+    
+    const count = parseInt(customParticipantCount);
+    if (isNaN(count) || count <= 0) return;
+    
+    // Apply the team size after a short delay (300ms)
+    const timer = setTimeout(() => {
+      setParticipantCount(count);
+      // Trigger animation for participants
+      setAnimateParticipants(true);
+      // Reset animation state after a delay
+      setTimeout(() => setAnimateParticipants(false), 1000);
+    }, 300);
+    
+    // Clean up the timer on component unmount or when input changes again
+    return () => clearTimeout(timer);
+  }, [customParticipantCount, setParticipantCount]);
   
   // We don't need a separate effect for participants since the salaryRange values
   // like "0-25" are consistent across currencies, and the display uses the current
@@ -204,6 +260,9 @@ export default function Home() {
 
   // Add a new participant
   const addParticipant = () => {
+    // Don't add more participants if we've reached the limit of 20
+    if (participants.length >= 20) return;
+    
     // Copy the hourly rate from the last participant if available
     const lastParticipant = participants[participants.length - 1];
     const newHourlyRate = lastParticipant.hourlyRate || "";
@@ -220,40 +279,6 @@ export default function Home() {
         salaryType: newSalaryType
       }
     ]);
-  };
-
-  // Set a specific number of participants (replaces current list)
-  const setParticipantCount = (count: number) => {
-    // Get rate from first participant to apply to all new participants
-    const existingRate = participants[0]?.hourlyRate || "";
-    const existingSalaryRange = participants[0]?.salaryRange || "";
-    const existingSalaryType = participants[0]?.salaryType || "hourly";
-    
-    // Preserve existing participants up to the count
-    const existingToKeep = participants.slice(0, count);
-    
-    // Create new participants if needed
-    const additionalNeeded = count - existingToKeep.length;
-    const newParticipants = additionalNeeded > 0 
-      ? Array.from({ length: additionalNeeded }, (_, index) => ({
-          id: (Date.now() + index).toString(),
-          name: "",
-          hourlyRate: existingRate,
-          salaryRange: existingSalaryRange,
-          salaryType: existingSalaryType
-        }))
-      : [];
-    
-    setParticipants([...existingToKeep, ...newParticipants]);
-  };
-
-  // Handle custom participant count set
-  const handleSetCustomParticipants = () => {
-    const count = parseInt(customParticipantCount);
-    if (!isNaN(count) && count > 0) {
-      setParticipantCount(count);
-      setCustomParticipantCount("");
-    }
   };
 
   // Remove a participant
@@ -687,26 +712,51 @@ export default function Home() {
                   <Users className="h-4 w-4 mr-2 text-muted-foreground" />
                   <span className="text-sm font-medium">Team Size</span>
                 </div>
-                <div className="flex items-center w-full">
+                <div className="relative">
                   <Input
-                    type="number"
+                    type="text" 
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     placeholder="e.g. 8"
                     value={customParticipantCount}
-                    onChange={(e) => setCustomParticipantCount(e.target.value)}
-                    min="1"
+                    onChange={(e) => {
+                      // Only allow numeric input
+                      const value = e.target.value.replace(/[^0-9]/g, '');
+                      setCustomParticipantCount(value);
+                    }}
+                    onBlur={() => {
+                      const count = parseInt(customParticipantCount);
+                      if (!isNaN(count) && count > 0) {
+                        // Apply max limit during validation
+                        const limitedCount = Math.min(count, 20);
+                        if (limitedCount !== count) {
+                          setCustomParticipantCount(limitedCount.toString());
+                        }
+                        setParticipantCount(limitedCount);
+                        // Trigger animation manually on blur
+                        setAnimateParticipants(true);
+                        setTimeout(() => setAnimateParticipants(false), 1000);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const count = parseInt(customParticipantCount);
+                        if (!isNaN(count) && count > 0) {
+                          // Apply max limit during validation
+                          const limitedCount = Math.min(count, 20);
+                          if (limitedCount !== count) {
+                            setCustomParticipantCount(limitedCount.toString());
+                          }
+                          setParticipantCount(limitedCount);
+                          // Trigger animation manually on Enter key
+                          setAnimateParticipants(true);
+                          setTimeout(() => setAnimateParticipants(false), 1000);
+                        }
+                      }
+                    }}
                     className="rounded-lg"
                   />
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleSetCustomParticipants}
-                    disabled={!customParticipantCount || parseInt(customParticipantCount) <= 0}
-                    className="flex items-center gap-1 ml-2 rounded-lg"
-                  >
-                    <Check className="h-3.5 w-3.5" />
-                    Set
-                  </Button>
+                  <p className="text-xs text-muted-foreground mt-1">Maximum team size: 20 participants</p>
                 </div>
               </div>
               
@@ -805,7 +855,7 @@ export default function Home() {
                 )}
               </div>
               
-              {/* Participant details */}
+              {/* Participant details with animation */}
               <div className="border-t border-border/30 pt-3">
                 <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
                   <div className="flex items-center">
@@ -823,178 +873,188 @@ export default function Home() {
                   </Button>
                 </div>
                 
-                <div className="mt-2 space-y-2">
-                  {participants.map((participant, index) => (
-                    <div key={participant.id} className="rounded-lg border border-border/10 hover:border-border/30 transition-colors relative">
-                      {compactView ? (
-                        // Compact View - Ultra space efficient
-                        <div className="flex items-center justify-between gap-1 p-2">
-                          <div className="flex items-center gap-2 min-w-0">
-                            <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                            <span className="text-sm truncate">
-                              {participant.name || `Person ${index + 1}`}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="text-right">
-                              <span className="text-sm font-medium block">
-                                {useExactRates 
-                                  ? (participant.hourlyRate ? getParticipantRateDisplay(participant) : '--') 
-                                  : (salaryRanges.find(r => r.value === participant.salaryRange)?.label || '--')}
+                <AnimateParticipants 
+                  participants={participants} 
+                  triggered={animateParticipants || participants.length > 0}
+                  className="mt-2"
+                >
+                  <div className="space-y-2">
+                    {participants.map((participant, index) => (
+                      <div key={participant.id} className="rounded-lg border border-border/10 hover:border-border/30 transition-colors relative">
+                        {compactView ? (
+                          // Compact View - Ultra space efficient
+                          <div className="flex items-center justify-between gap-1 p-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <User className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                              <span className="text-sm truncate">
+                                {participant.name || `Person ${index + 1}`}
                               </span>
-                              {participant.hourlyRate && participant.salaryType !== "hourly" && (
-                                <span className="text-xs text-muted-foreground">
-                                  {convertToHourlyForDisplay(participant)}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <div className="text-right">
+                                <span className="text-sm font-medium block">
+                                  {useExactRates 
+                                    ? (participant.hourlyRate ? getParticipantRateDisplay(participant) : '--') 
+                                    : (salaryRanges.find(r => r.value === participant.salaryRange)?.label || '--')}
                                 </span>
+                                {participant.hourlyRate && participant.salaryType !== "hourly" && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {convertToHourlyForDisplay(participant)}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="flex items-center">
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-muted-foreground hover:text-primary h-7 w-7 rounded-full p-0 flex items-center justify-center shrink-0"
+                                  onClick={() => {
+                                    // Open this participant for editing in full view
+                                    setCompactView(false);
+                                  }}
+                                  aria-label="Edit participant"
+                                >
+                                  <Edit3 className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-muted-foreground hover:text-red-500 h-7 w-7 rounded-full p-0 flex items-center justify-center shrink-0"
+                                  onClick={() => removeParticipant(participant.id)}
+                                  disabled={participants.length === 1}
+                                  aria-label="Remove participant"
+                                >
+                                  <X className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          // Regular View - More detailed editing
+                          <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2 p-2">
+                            {/* Name field - Full width on mobile, first column on desktop */}
+                            <div className="w-full">
+                              <Label htmlFor={`name-${participant.id}`} className="text-xs mb-1 block">Name (Optional)</Label>
+                              <div className="flex items-center h-9">
+                                <User className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
+                                <Input
+                                  id={`name-${participant.id}`}
+                                  value={participant.name}
+                                  onChange={(e) => updateParticipant(participant.id, "name", e.target.value)}
+                                  placeholder={`Person ${index + 1}`}
+                                  className="w-full rounded-md h-8 text-sm"
+                                />
+                              </div>
+                            </div>
+                            
+                            {/* Rate field - Full width on mobile, second column on desktop */}
+                            <div className="w-full">
+                              {useExactRates ? (
+                                <div>
+                                  <div className="flex items-center justify-between mb-1">
+                                    <Label htmlFor={`rate-${participant.id}`} className="text-xs block">
+                                      {participant.salaryType === "hourly" ? "Hourly Rate" :
+                                       participant.salaryType === "monthly" ? "Monthly Salary" : 
+                                       "Annual Salary"}
+                                    </Label>
+                                  </div>
+                                  <div className="flex items-center">
+                                    <div className="relative flex-grow">
+                                      <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
+                                        <span className="text-sm text-muted-foreground">{currency.symbol}</span>
+                                      </div>
+                                      <Input
+                                        id={`rate-${participant.id}`}
+                                        type="text"
+                                        placeholder={participant.salaryType === "hourly" ? "e.g., 50" : 
+                                                    participant.salaryType === "monthly" ? `e.g., ${formatPlaceholder(5000)}` : 
+                                                    `e.g., ${formatPlaceholder(60000)}`}
+                                        value={participant.hourlyRate ? formatNumberWithSeparators(participant.hourlyRate) : ""}
+                                        onChange={(e) => {
+                                          if (e.target.value) {
+                                            const rawValue = parseFormattedNumber(e.target.value);
+                                            updateParticipant(participant.id, "hourlyRate", rawValue);
+                                          } else {
+                                            updateParticipant(participant.id, "hourlyRate", "");
+                                          }
+                                        }}
+                                        className="w-full rounded-md h-8 text-sm pl-7"
+                                      />
+                                    </div>
+                                    {participant.hourlyRate && participant.salaryType !== "hourly" && (
+                                      <div className="ml-2 text-xs text-muted-foreground whitespace-nowrap">
+                                        {convertToHourlyForDisplay(participant)}
+                                      </div>
+                                    )}
+                                  </div>
+                                  {participant.salaryType !== "hourly" && participant.hourlyRate && (
+                                    <div className="mt-1 text-xs flex items-center">
+                                      <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5">
+                                        = {convertToHourlyForDisplay(participant)}
+                                      </span>
+                                    </div>
+                                  )}
+                                </div>
+                              ) : (
+                                <div>
+                                  <Label htmlFor={`range-${participant.id}`} className="text-xs mb-1 block">Salary Range</Label>
+                                  <Select
+                                    value={participant.salaryRange}
+                                    onValueChange={(value) => updateParticipant(participant.id, "salaryRange", value)}
+                                  >
+                                    <SelectTrigger id={`range-${participant.id}`} className="w-full rounded-md h-8 text-sm">
+                                      <SelectValue placeholder="Select range" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {salaryRanges.map((range) => (
+                                        <SelectItem key={range.value} value={range.value}>
+                                          {range.label}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
                               )}
                             </div>
-                            <div className="flex items-center">
+                            
+                            {/* Delete button - Aligned right on all screens */}
+                            <div className="flex items-center justify-end sm:justify-center h-8 mt-auto">
                               <Button
                                 type="button"
                                 variant="ghost"
                                 size="sm"
-                                className="text-muted-foreground hover:text-primary h-7 w-7 rounded-full p-0 flex items-center justify-center shrink-0"
-                                onClick={() => {
-                                  // Open this participant for editing in full view
-                                  setCompactView(false);
-                                }}
-                                aria-label="Edit participant"
-                              >
-                                <Edit3 className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="text-muted-foreground hover:text-red-500 h-7 w-7 rounded-full p-0 flex items-center justify-center shrink-0"
+                                className="text-muted-foreground hover:text-red-500 h-8 w-8 rounded-full p-0 flex items-center justify-center"
                                 onClick={() => removeParticipant(participant.id)}
                                 disabled={participants.length === 1}
                                 aria-label="Remove participant"
                               >
-                                <X className="h-3.5 w-3.5" />
+                                <X className="h-4 w-4" />
                               </Button>
                             </div>
                           </div>
-                        </div>
-                      ) : (
-                        // Regular View - More detailed editing
-                        <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] gap-2 p-2">
-                          {/* Name field - Full width on mobile, first column on desktop */}
-                          <div className="w-full">
-                            <Label htmlFor={`name-${participant.id}`} className="text-xs mb-1 block">Name (Optional)</Label>
-                            <div className="flex items-center h-9">
-                              <User className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
-                              <Input
-                                id={`name-${participant.id}`}
-                                value={participant.name}
-                                onChange={(e) => updateParticipant(participant.id, "name", e.target.value)}
-                                placeholder={`Person ${index + 1}`}
-                                className="w-full rounded-md h-8 text-sm"
-                              />
-                            </div>
-                          </div>
-                          
-                          {/* Rate field - Full width on mobile, second column on desktop */}
-                          <div className="w-full">
-                            {useExactRates ? (
-                              <div>
-                                <div className="flex items-center justify-between mb-1">
-                                  <Label htmlFor={`rate-${participant.id}`} className="text-xs block">
-                                    {participant.salaryType === "hourly" ? "Hourly Rate" :
-                                     participant.salaryType === "monthly" ? "Monthly Salary" : 
-                                     "Annual Salary"}
-                                  </Label>
-                                </div>
-                                <div className="flex items-center">
-                                  <div className="relative flex-grow">
-                                    <div className="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
-                                      <span className="text-sm text-muted-foreground">{currency.symbol}</span>
-                                    </div>
-                                    <Input
-                                      id={`rate-${participant.id}`}
-                                      type="text"
-                                      placeholder={participant.salaryType === "hourly" ? "e.g., 50" : 
-                                                  participant.salaryType === "monthly" ? `e.g., ${formatPlaceholder(5000)}` : 
-                                                  `e.g., ${formatPlaceholder(60000)}`}
-                                      value={participant.hourlyRate ? formatNumberWithSeparators(participant.hourlyRate) : ""}
-                                      onChange={(e) => {
-                                        if (e.target.value) {
-                                          const rawValue = parseFormattedNumber(e.target.value);
-                                          updateParticipant(participant.id, "hourlyRate", rawValue);
-                                        } else {
-                                          updateParticipant(participant.id, "hourlyRate", "");
-                                        }
-                                      }}
-                                      className="w-full rounded-md h-8 text-sm pl-7"
-                                    />
-                                  </div>
-                                  {participant.hourlyRate && participant.salaryType !== "hourly" && (
-                                    <div className="ml-2 text-xs text-muted-foreground whitespace-nowrap">
-                                      {convertToHourlyForDisplay(participant)}
-                                    </div>
-                                  )}
-                                </div>
-                                {participant.salaryType !== "hourly" && participant.hourlyRate && (
-                                  <div className="mt-1 text-xs flex items-center">
-                                    <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5">
-                                      = {convertToHourlyForDisplay(participant)}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
-                            ) : (
-                              <div>
-                                <Label htmlFor={`range-${participant.id}`} className="text-xs mb-1 block">Salary Range</Label>
-                                <Select
-                                  value={participant.salaryRange}
-                                  onValueChange={(value) => updateParticipant(participant.id, "salaryRange", value)}
-                                >
-                                  <SelectTrigger id={`range-${participant.id}`} className="w-full rounded-md h-8 text-sm">
-                                    <SelectValue placeholder="Select range" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {salaryRanges.map((range) => (
-                                      <SelectItem key={range.value} value={range.value}>
-                                        {range.label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            )}
-                          </div>
-                          
-                          {/* Delete button - Aligned right on all screens */}
-                          <div className="flex items-center justify-end sm:justify-center h-8 mt-auto">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="text-muted-foreground hover:text-red-500 h-8 w-8 rounded-full p-0 flex items-center justify-center"
-                              onClick={() => removeParticipant(participant.id)}
-                              disabled={participants.length === 1}
-                              aria-label="Remove participant"
-                            >
-                              <X className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
 
-                {/* Add a person button */}
-                <div className="mt-4 flex justify-center">
-                  <Button 
-                    type="button" 
-                    variant="default" 
-                    onClick={addParticipant}
-                    className="flex items-center gap-1 rounded-full"
-                  >
-                    <Plus className="h-3.5 w-3.5 mr-1" /> Add a person
-                  </Button>
-                </div>
+                  {/* Add a person button */}
+                  <div className="mt-4 flex flex-col items-center">
+                    <Button 
+                      type="button" 
+                      variant="default" 
+                      onClick={addParticipant}
+                      className="flex items-center gap-1 rounded-full"
+                      disabled={participants.length >= 20}
+                    >
+                      <Plus className="h-3.5 w-3.5 mr-1" /> Add a person
+                    </Button>
+                    {participants.length >= 20 && (
+                      <p className="text-xs text-amber-500 mt-2">Maximum team size reached (20)</p>
+                    )}
+                  </div>
+                </AnimateParticipants>
               </div>
             </div>
           </div>
