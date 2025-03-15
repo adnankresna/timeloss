@@ -442,6 +442,22 @@ export default function Home() {
       maximumFractionDigits: 0
     }).format(value);
   };
+  
+  // Format number with thousand separators for input display
+  const formatNumberWithSeparators = (value: string): string => {
+    if (!value) return '';
+    // Remove any non-digit characters
+    const digitsOnly = value.replace(/\D/g, '');
+    // Format with thousand separators
+    return new Intl.NumberFormat('en-US').format(parseInt(digitsOnly) || 0);
+  };
+
+  // Parse formatted number string back to raw value
+  const parseFormattedNumber = (formatted: string): string => {
+    if (!formatted) return '';
+    // Remove any non-digit characters
+    return formatted.replace(/\D/g, '');
+  };
 
   // Get participant rate display with currency
   const getParticipantRateDisplay = (participant: Participant) => {
@@ -449,13 +465,14 @@ export default function Home() {
       if (!participant.hourlyRate) return "Not set";
       
       const rate = parseFloat(participant.hourlyRate);
+      const formattedRate = new Intl.NumberFormat('en-US').format(rate);
       
       if (participant.salaryType === "hourly") {
-        return `${currency.symbol}${rate}/hr`;
+        return `${currency.symbol}${formattedRate}/hr`;
       } else if (participant.salaryType === "monthly") {
-        return `${currency.symbol}${rate}/mo`;
+        return `${currency.symbol}${formattedRate}/mo`;
       } else {
-        return `${currency.symbol}${rate}/yr`;
+        return `${currency.symbol}${formattedRate}/yr`;
       }
     } else {
       const range = salaryRanges.find(r => r.value === participant.salaryRange);
@@ -469,17 +486,24 @@ export default function Home() {
     
     const rate = parseFloat(participant.hourlyRate);
     
+    let hourlyRate: number;
     if (participant.salaryType === "hourly") {
-      return `${currency.symbol}${rate.toFixed(2)}/hr`;
+      hourlyRate = rate;
     } else if (participant.salaryType === "monthly") {
-      const hourly = rate / 173.33;
-      return `${currency.symbol}${hourly.toFixed(2)}/hr`;
+      hourlyRate = rate / 173.33;
     } else if (participant.salaryType === "annual") {
-      const hourly = rate / 2080;
-      return `${currency.symbol}${hourly.toFixed(2)}/hr`;
+      hourlyRate = rate / 2080;
+    } else {
+      return "--";
     }
     
-    return "--";
+    // Format with thousand separators and decimals
+    const formattedRate = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(hourlyRate);
+    
+    return `${currency.symbol}${formattedRate}/hr`;
   };
 
   // Toggle compact view
@@ -759,20 +783,23 @@ export default function Home() {
                             </div>
                             <Input
                               id={`rate-${participants[0]?.id}`}
-                              type="number"
+                              type="text"
                               placeholder={participants[0]?.salaryType === "hourly" ? "e.g., 50" : 
                                                   participants[0]?.salaryType === "monthly" ? `e.g., ${formatPlaceholder(5000)}` : 
                                                   `e.g., ${formatPlaceholder(60000)}`}
-                              value={participants[0]?.hourlyRate}
+                              value={participants[0]?.hourlyRate ? formatNumberWithSeparators(participants[0].hourlyRate) : ""}
                               onChange={(e) => {
-                                if (e.target.value) applyRateToAll(e.target.value);
+                                if (e.target.value) {
+                                  const rawValue = parseFormattedNumber(e.target.value);
+                                  applyRateToAll(rawValue);
+                                } else {
+                                  applyRateToAll("");
+                                }
                               }}
-                              min="1"
-                              step="1"
                               className="w-full rounded-md h-8 text-sm pl-7"
                             />
                           </div>
-                          {participants[0]?.hourlyRate && (
+                          {participants[0]?.hourlyRate && participants[0]?.salaryType !== "hourly" && (
                             <div className="ml-2 text-xs text-muted-foreground whitespace-nowrap">
                               {convertToHourlyForDisplay(participants[0])}
                             </div>
@@ -851,7 +878,7 @@ export default function Home() {
                                   ? (participant.hourlyRate ? getParticipantRateDisplay(participant) : '--') 
                                   : (salaryRanges.find(r => r.value === participant.salaryRange)?.label || '--')}
                               </span>
-                              {useExactRates && participant.hourlyRate && (
+                              {participant.hourlyRate && participant.salaryType !== "hourly" && (
                                 <span className="text-xs text-muted-foreground">
                                   {convertToHourlyForDisplay(participant)}
                                 </span>
@@ -913,21 +940,6 @@ export default function Home() {
                                      participant.salaryType === "monthly" ? "Monthly Salary" : 
                                      "Annual Salary"}
                                   </Label>
-                                  <Select
-                                    value={participant.salaryType}
-                                    onValueChange={(value: "hourly" | "monthly" | "annual") => 
-                                      updateParticipant(participant.id, "salaryType", value)
-                                    }
-                                  >
-                                    <SelectTrigger className="w-28 h-6 text-xs rounded-md">
-                                      <SelectValue placeholder="Type" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                      <SelectItem value="hourly">Hourly</SelectItem>
-                                      <SelectItem value="monthly">Monthly</SelectItem>
-                                      <SelectItem value="annual">Annual</SelectItem>
-                                    </SelectContent>
-                                  </Select>
                                 </div>
                                 <div className="flex items-center">
                                   <div className="relative flex-grow">
@@ -936,18 +948,23 @@ export default function Home() {
                                     </div>
                                     <Input
                                       id={`rate-${participant.id}`}
-                                      type="number"
+                                      type="text"
                                       placeholder={participant.salaryType === "hourly" ? "e.g., 50" : 
                                                   participant.salaryType === "monthly" ? `e.g., ${formatPlaceholder(5000)}` : 
                                                   `e.g., ${formatPlaceholder(60000)}`}
-                                      value={participant.hourlyRate}
-                                      onChange={(e) => updateParticipant(participant.id, "hourlyRate", e.target.value)}
-                                      min="1"
-                                      step="1"
+                                      value={participant.hourlyRate ? formatNumberWithSeparators(participant.hourlyRate) : ""}
+                                      onChange={(e) => {
+                                        if (e.target.value) {
+                                          const rawValue = parseFormattedNumber(e.target.value);
+                                          updateParticipant(participant.id, "hourlyRate", rawValue);
+                                        } else {
+                                          updateParticipant(participant.id, "hourlyRate", "");
+                                        }
+                                      }}
                                       className="w-full rounded-md h-8 text-sm pl-7"
                                     />
                                   </div>
-                                  {participant.hourlyRate && (
+                                  {participant.hourlyRate && participant.salaryType !== "hourly" && (
                                     <div className="ml-2 text-xs text-muted-foreground whitespace-nowrap">
                                       {convertToHourlyForDisplay(participant)}
                                     </div>
