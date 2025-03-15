@@ -1033,46 +1033,67 @@ export default function Home() {
             </div>
             
             <div className="bg-muted/10 p-4 sm:p-6 rounded-xl">
-              {/* Cost display */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 sm:gap-8 mb-6 bg-background/40 p-4 sm:p-6 rounded-xl shadow-sm">
-                <div className="p-2 sm:p-3 rounded-xl text-center sm:text-left">
-                  <h3 className="font-medium text-base sm:text-lg mb-1">Total Meeting Cost</h3>
-                  <p className="text-3xl sm:text-4xl font-bold tracking-tight text-primary">
-                    {currency.symbol}{totalCost !== null ? formatMoney(totalCost) : "0"}
+              {/* Cost display - Redesigned with Apple-style information presentation */}
+              <div className="flex flex-col mb-8">
+                {/* Primary cost indicator */}
+                <div className="text-center mb-8">
+                  <p className="text-sm text-muted-foreground mb-2 font-medium tracking-wide uppercase">
+                    Total Meeting Cost
                   </p>
-                  <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                  <h2 className="text-4xl sm:text-5xl font-bold tracking-tight text-primary mb-1">
+                    {currency.symbol}{totalCost !== null ? formatMoney(totalCost) : "0"}
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
                     {participants.length} {participants.length === 1 ? 'person' : 'people'} × {duration || '1'} {timeUnit}
                   </p>
-                  {totalCost !== null && timeUnit === "hours" && (
-                    <p className="text-xs text-primary-foreground/70 mt-2 bg-primary/10 px-2 py-1 rounded-md inline-block">
-                      {currency.symbol}{formatMoney(totalCost / (parseFloat(duration) || 1))}/hr
-                    </p>
-                  )}
-                  {totalCost !== null && timeUnit === "minutes" && (
-                    <p className="text-xs text-primary-foreground/70 mt-2 bg-primary/10 px-2 py-1 rounded-md inline-block">
-                      {currency.symbol}{formatMoney(totalCost / (parseFloat(duration) || 1))}/min
-                    </p>
-                  )}
                 </div>
-                
-                <div className="text-center sm:text-right p-2 sm:p-3 rounded-xl">
-                  <h3 className="font-medium text-base sm:text-lg mb-1">Per Person Average</h3>
-                  <p className="text-2xl sm:text-3xl font-semibold tracking-tight">
-                    {currency.symbol}{totalCost !== null && participants.length > 0 
-                      ? formatMoney(totalCost / participants.length) 
-                      : "0"}
-                  </p>
-                  <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                    Total person-hours: {calculatePersonHours()}
-                  </p>
-                  {totalCost !== null && participants.length > 0 && (
-                    <p className="text-xs text-muted-foreground mt-2 bg-muted/20 px-2 py-1 rounded-md inline-block">
-                      {timeUnit === "hours" 
-                        ? `${currency.symbol}${formatMoney((totalCost / participants.length) / (parseFloat(duration) || 1))}/hr per person`
-                        : `${currency.symbol}${formatMoney((totalCost / participants.length) / (parseFloat(duration) || 1))}/min per person`
-                      }
+
+                {/* Cost metrics in a refined grid */}
+                <div className="grid grid-cols-2 gap-6 sm:gap-10 px-2 sm:px-8">
+                  {/* Left metric */}
+                  <div className="text-center border-r border-border/20 pr-4">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Per Hour Rate</p>
+                    <p className="text-2xl sm:text-3xl font-semibold">
+                      {currency.symbol}{totalCost !== null ? formatMoney(totalCost / (parseFloat(duration) || 1) * (timeUnit === "minutes" ? 60 : 1)) : "0"}
                     </p>
-                  )}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      group cost per hour
+                    </p>
+                  </div>
+                  
+                  {/* Right metric */}
+                  <div className="text-center pl-4">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Per Person</p>
+                    <p className="text-2xl sm:text-3xl font-semibold">
+                      {currency.symbol}{totalCost !== null && participants.length > 0 
+                        ? formatMoney(totalCost / participants.length) 
+                        : "0"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      average per attendee
+                    </p>
+                  </div>
+                </div>
+
+                {/* Refined secondary metrics */}
+                <div className="grid grid-cols-2 gap-6 sm:gap-10 mt-8 px-2 sm:px-8 pt-6 border-t border-border/10">
+                  <div className="text-center">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Hourly Per Person</p>
+                    <p className="text-lg sm:text-xl font-medium">
+                      {currency.symbol}{totalCost !== null && participants.length > 0
+                        ? formatMoney((totalCost / participants.length) / (parseFloat(duration) || 1) * (timeUnit === "minutes" ? 60 : 1))
+                        : "0"}
+                      <span className="text-xs text-muted-foreground">/hr</span>
+                    </p>
+                  </div>
+                  
+                  <div className="text-center">
+                    <p className="text-xs font-medium text-muted-foreground mb-1">Total Person-Hours</p>
+                    <p className="text-lg sm:text-xl font-medium">
+                      {calculatePersonHours()}
+                      <span className="text-xs text-muted-foreground ml-1">hrs</span>
+                    </p>
+                  </div>
                 </div>
               </div>
               
@@ -1126,7 +1147,7 @@ export default function Home() {
               
               {/* Cost breakdown */}
               {totalCost !== null && participants.length > 0 && (
-                <div className="w-full">
+                <div className="w-full mt-8 pt-8 border-t border-border/30">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
                     <h3 className="font-semibold text-base sm:text-lg mb-2 sm:mb-0">
                       Cost Breakdown
@@ -1138,7 +1159,7 @@ export default function Home() {
                     )}
                   </div>
                   
-                  <div className="grid grid-cols-1 gap-3 sm:gap-4">
+                  <div className="space-y-3 sm:space-y-2">
                     {participants.map((participant) => {
                       // Skip if no valid rate info
                       if ((useExactRates && !participant.hourlyRate) || 
@@ -1148,30 +1169,41 @@ export default function Home() {
                       
                       const individualCost = calculateIndividualCost(participant);
                       const rateDisplay = getParticipantRateDisplay(participant);
+                      const percentage = totalCost ? Math.round((individualCost / totalCost) * 100) : 0;
                       
                       return (
-                        <div key={participant.id} className="flex justify-between text-sm p-3 rounded-lg bg-background/40">
-                          <span className="font-medium">
-                            {participant.name || `Person ${participants.indexOf(participant) + 1}`} 
-                            <span>
-                              ({rateDisplay}
+                        <div key={participant.id} className="flex items-center py-2 border-b border-border/10 last:border-0">
+                          <div className="flex-grow">
+                            <p className="font-medium">
+                              {participant.name || `Person ${participants.indexOf(participant) + 1}`}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {rateDisplay}
                               {useExactRates && participant.salaryType !== "hourly" && participant.hourlyRate && (
-                                <span className="text-xs text-muted-foreground ml-1">
-                                  ~{convertToHourlyForDisplay(participant)}
+                                <span className="ml-1">
+                                  (~{convertToHourlyForDisplay(participant)})
                                 </span>
-                              )})
-                            </span>
-                          </span>
-                          <span className="font-bold">{currency.symbol}{formatMoney(individualCost)}</span>
+                              )}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-semibold">
+                              {currency.symbol}{formatMoney(individualCost)}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {percentage}% of total
+                            </p>
+                          </div>
                         </div>
                       );
                     })}
                   </div>
                   
                   {participants.length > 2 && (
-                    <p className="text-xs sm:text-sm text-muted-foreground mt-4 p-3 rounded text-center bg-background/40">
-                      That&apos;s {currency.symbol}{formatMoney(totalCost / 60)} per minute for this group
-                    </p>
+                    <div className="mt-6 text-center">
+                      <p className="text-sm font-medium">{currency.symbol}{formatMoney(totalCost / 60)}<span className="text-muted-foreground text-xs"> per minute</span></p>
+                      <p className="text-xs text-muted-foreground mt-1">Cost of this meeting per minute</p>
+                    </div>
                   )}
                 </div>
               )}
