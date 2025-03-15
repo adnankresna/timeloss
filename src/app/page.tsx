@@ -13,15 +13,6 @@ import ExportTemplate from "@/components/ExportTemplate";
 import { Participant, COMMON_CURRENCIES, CurrencyInfo } from "@/types/types";
 import { generateSalaryRanges } from "@/utils/currencyUtils";
 
-// Common team sizes for quick setting
-const COMMON_TEAM_SIZES = [
-  { label: "Just me", value: 1 },
-  { label: "Small huddle (2)", value: 2 },
-  { label: "Team meeting (5)", value: 5 },
-  { label: "Department (10)", value: 10 },
-  { label: "Large group (15+)", value: 15 },
-];
-
 export default function Home() {
   // Export status
   const [exportStatus, setExportStatus] = useState<string | null>(null);
